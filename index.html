@@ -5,64 +5,29 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="logo.svg" />
     <title>ГИС</title>
   </head>
   <body>
     <header class="header">
       <div class="header__logo">
-        <svg
-          id="Capa_1"
-          enable-background="new 0 0 512 512"
-          height="32"
-          viewBox="0 0 512 512"
-          width="32"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g>
-            <g>
-              <g>
-                <path
-                  d="m467 133.816-78-53.816-55.816-80h-77.185l-10 256 10 256h211.001z"
-                  fill="#efe2dd"
-                />
-                <path d="m45 0h211v512h-211z" fill="#f7f0eb" />
-              </g>
-              <path d="m467 133.816h-133.816v-133.816z" fill="#d2d2d7" />
-            </g>
-            <path
-              d="m353.171 340.978c-18.672 0-36.729-7.15-49.545-19.617l20.92-21.503c7.264 7.066 17.697 11.12 28.625 11.12 15.665 0 19.339-10.576 20.092-13.817.105-.452 2.424-11.127-10.716-14.95-4.107-1.195-7.827-2.19-11.11-3.069-11.895-3.184-21.291-5.698-31.322-13.168-11.855-8.827-17.786-23.27-15.48-37.691 2.43-15.194 13.357-27.437 29.232-32.749 24.595-8.229 46.959 3.751 55.432 9.283l-16.402 25.119c-3.76-2.455-17-10.139-29.51-5.953-5.234 1.752-8.477 4.961-9.128 9.037-.545 3.403.866 6.727 3.774 8.892 5.214 3.882 9.965 5.253 21.161 8.249 3.429.917 7.315 1.958 11.733 3.243 15.872 4.617 23.837 14.414 27.724 21.818 4.629 8.818 6.026 19.289 3.835 28.726-5.146 22.149-24.965 37.03-49.315 37.03z"
-              fill="#fd8c02"
-            />
-            <path
-              d="m161.503 340.905c-29.225 0-53.003-23.777-53.003-53.002v-42.069c0-29.226 23.777-53.002 53.003-53.002 19.21 0 36.958 10.431 46.318 27.223l-26.203 14.607c-4.068-7.297-11.775-11.83-20.115-11.83-12.684 0-23.003 10.319-23.003 23.002v42.069c0 12.684 10.319 23.002 23.003 23.002s23.003-10.319 23.003-23.002v-.441h-23.003v-30h53.003v30.441c0 29.225-23.778 53.002-53.003 53.002z"
-              fill="#fdae02"
-            />
-            <g>
-              <path
-                d="m271 192.831h-15.001l-4.332 78.169 4.332 69.905h15.001z"
-                fill="#fd8c02"
-              />
-              <path d="m241 192.831h15v148.074h-15z" fill="#fdae02" />
-            </g>
-            <g>
-              <path
-                d="m404 371.686h-148.001l-10 15 10 15h148.001z"
-                fill="#b9b9be"
-              />
-              <path d="m108 371.686h148v30h-148z" fill="#d2d2d7" />
-            </g>
-          </g>
-        </svg>
+        <img src="logo.svg" width="32px" height="32px" />
       </div>
       <div class="menu">
         <button class="menu__item">Файл</button>
         <button class="menu__item">Функции</button>
+        <!-- <div class="menu__popup-menu">
+          <ul></ul>
+          <button class="menu__popup-menu-item">Загрузить файл</button>
+          <button class="menu__popup-menu-item">Загрузить файл1</button>
+          <button class="menu__popup-menu-item">Загрузить файл2</button>
+        </div> -->
       </div>
     </header>
 
     <section class="sidebar"></section>
     <main class="map">
-      <div class="map__body"></div>
+      <svg class="map__body"></svg>
     </main>
     <div class="hide">
       <input type="file" />
