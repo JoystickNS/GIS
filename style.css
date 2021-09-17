@@ -89,8 +89,6 @@ body {
 
 .map__body {
   position: absolute;
-  min-width: 4000px;
-  min-height: 2000px;
   background-color: #f8f9fa;
 }
 

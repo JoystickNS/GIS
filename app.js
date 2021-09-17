@@ -6,31 +6,50 @@ const mapBody = document.querySelector(".map__body");
 const popupMenu = {
   options: {
     activeItem: null,
-    block: null,
+    activeBlock: null,
   },
 
   file: [
     {
       name: "Загрузить изображение",
-      clickFunc() {
+      event: "click",
+      func() {
         const fileInput = document.querySelector("[type='file']");
         fileInput.click();
-        fileInput.addEventListener("change", () => {
-          const image = document.createElement("image");
-          image.setAttribute("x", "100");
-          image.setAttribute("y", "100");
-          image.setAttribute("width", "100px");
-          image.setAttribute("height", "100px");
-          image.setAttribute("preserveAspectRatio", "none");
-          image.setAttribute("href", URL.createObjectURL(fileInput.files[0]));
-          mapBody.appendChild(image);
+        fileInput.addEventListener("change", function loadImg() {
+          if (fileInput.files[0].type.includes("image")) {
+            const xmlns = "http://www.w3.org/2000/svg";
+            const image = document.createElementNS(xmlns, "image");
+            const img = document.createElement("img");
+            const imageUrl = URL.createObjectURL(fileInput.files[0]);
+
+            img.src = imageUrl;
+            img.onload = function () {
+              image.setAttribute(
+                "href",
+                URL.createObjectURL(fileInput.files[0])
+              );
+              image.setAttribute("width", this.width);
+              image.setAttribute("height", this.height);
+              mapBody.setAttribute("width", this.width);
+              mapBody.setAttribute("height", this.height);
+
+              mapBody.appendChild(image);
+              URL.revokeObjectURL(imageUrl);
+              alert("da");
+              fileInput.removeEventListener("change", loadImg);
+            };
+          } else {
+            alert("Вы выбрали не картинку");
+          }
         });
       },
       block: null,
     },
     {
       name: "Сохранить",
-      clickFunc() {
+      event: "click",
+      func() {
         alert("Сохранить");
       },
       block: null,
@@ -40,14 +59,16 @@ const popupMenu = {
   functions: [
     {
       name: "1",
-      clickFunc() {
+      event: "click",
+      func() {
         alert("1");
       },
       block: null,
     },
     {
       name: "2",
-      clickFunc() {
+      event: "click",
+      func() {
         alert("2");
       },
       block: null,
@@ -55,57 +76,64 @@ const popupMenu = {
   ],
 };
 
-// Adding event on every "Menu button"
+// Adding "mousedown" event on every "Menu button"
 menuItems.forEach((item, ind) => {
-  item.addEventListener("click", (e) => {
-    // Clicked on active menu item
+  item.addEventListener("mousedown", (e) => {
     if (e.target === popupMenu.options.activeItem) {
-      popupMenu.options.activeItem.classList.remove("menu__item_active");
-      popupMenu.options.activeItem = null;
+      hidePopupMenu();
       return;
     }
 
-    switch (ind) {
-      // File button
-      case 0:
-        popupMenu.options.block = popupMenu.file.block;
-        break;
-      // Functions button
-      case 1:
-        popupMenu.options.block = popupMenu.functions.block;
-        break;
-    }
-
-    popupMenu.options.activeItem = e.target;
-    popupMenu.options.activeItem.classList.add("menu__item_active");
-    popupMenu.options.block.style.left = `${e.target.offsetLeft}px`;
-    menuBlock.appendChild(popupMenu.options.block);
+    showPopupMenu(e.target, ind);
   });
 });
 
-menuItems.forEach((item) => {
+// Adding "mouseenter" event on every "Menu button"
+menuItems.forEach((item, ind) => {
   item.addEventListener("mouseenter", (e) => {
     if (popupMenu.options.activeItem) {
-      popupMenu.options.block.remove();
-      console.log(e);
+      popupMenu.options.activeBlock.remove();
       popupMenu.options.activeItem.classList.remove("menu__item_active");
-      popupMenu.options.activeItem = e.target;
-      popupMenu.options.activeItem.classList.add("menu__item_active");
-      //menuPopupBlock.style.left = `${e.target.offsetLeft}px`;
+
+      showPopupMenu(e.target, ind);
     }
   });
 });
 
-document.addEventListener("mousedown", (e) => {
+// Adding "click" event on document
+document.addEventListener("click", (e) => {
   if (
     popupMenu.options.activeItem &&
     popupMenu.options.activeItem !== e.target
   ) {
-    popupMenu.options.activeItem.classList.remove("menu__item_active");
-    popupMenu.options.activeItem = null;
-    //menuPopupBlock.style.display = "none";
+    hidePopupMenu();
   }
 });
+
+function showPopupMenu(target, ind) {
+  switch (ind) {
+    // File button
+    case 0:
+      popupMenu.options.activeBlock = popupMenu.file.block;
+      break;
+    // Functions button
+    case 1:
+      popupMenu.options.activeBlock = popupMenu.functions.block;
+      break;
+  }
+
+  popupMenu.options.activeItem = target;
+  target.classList.add("menu__item_active");
+  popupMenu.options.activeBlock.style.left = `${target.offsetLeft}px`;
+  menuBlock.appendChild(popupMenu.options.activeBlock);
+}
+
+function hidePopupMenu() {
+  popupMenu.options.activeItem.classList.remove("menu__item_active");
+  popupMenu.options.activeItem = null;
+  popupMenu.options.activeBlock.remove();
+  popupMenu.options.activeBlock = null;
+}
 
 (function createPopupMenu() {
   for (let prop in popupMenu) {
@@ -117,7 +145,7 @@ document.addEventListener("mousedown", (e) => {
         const button = document.createElement("button");
         button.classList.add("menu__popup-menu-item");
         button.textContent = item.name;
-        button.addEventListener("click", item.clickFunc);
+        button.addEventListener(item.event, item.func);
         popupBlock.appendChild(button);
       });
 
