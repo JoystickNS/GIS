@@ -1,155 +1,88 @@
+const xmlns = "http://www.w3.org/2000/svg";
 const menuBlock = document.querySelector(".menu");
-const menuItems = document.querySelectorAll(".menu__item"); // Menu buttons
-const menuPopupBlock = null;
-const mapBody = document.querySelector(".map__body");
+const menuItems = menuBlock.querySelectorAll(".menu__item"); // Menu buttons
+const main = document.querySelector("main");
+const mapBody = main.querySelector(".map__body");
+const mapImage = main.querySelector(".map__image");
+const options = document.querySelector(".options");
+const sidebar = document.querySelector(".sidebar");
 
-const popupMenu = {
-  options: {
-    activeItem: null,
-    activeBlock: null,
-  },
-
-  file: [
-    {
-      name: "Загрузить изображение",
-      event: "click",
-      func() {
-        const fileInput = document.querySelector("[type='file']");
-        fileInput.click();
-        fileInput.addEventListener("change", function loadImg() {
-          if (fileInput.files[0].type.includes("image")) {
-            const xmlns = "http://www.w3.org/2000/svg";
-            const image = document.createElementNS(xmlns, "image");
-            const img = document.createElement("img");
-            const imageUrl = URL.createObjectURL(fileInput.files[0]);
-
-            img.src = imageUrl;
-            img.onload = function () {
-              image.setAttribute(
-                "href",
-                URL.createObjectURL(fileInput.files[0])
-              );
-              image.setAttribute("width", this.width);
-              image.setAttribute("height", this.height);
-              mapBody.setAttribute("width", this.width);
-              mapBody.setAttribute("height", this.height);
-
-              mapBody.appendChild(image);
-              URL.revokeObjectURL(imageUrl);
-              alert("da");
-              fileInput.removeEventListener("change", loadImg);
-            };
-          } else {
-            alert("Вы выбрали не картинку");
-          }
-        });
-      },
-      block: null,
-    },
-    {
-      name: "Сохранить",
-      event: "click",
-      func() {
-        alert("Сохранить");
-      },
-      block: null,
-    },
-  ],
-
-  functions: [
-    {
-      name: "1",
-      event: "click",
-      func() {
-        alert("1");
-      },
-      block: null,
-    },
-    {
-      name: "2",
-      event: "click",
-      func() {
-        alert("2");
-      },
-      block: null,
-    },
-  ],
+const map = {
+  zoom: 100,
+  step: 5,
+  isCoordsCalculated: false,
+  isMarked: false,
+  isGridAttach: false,
+  curentX: 0,
+  currentY: 0,
 };
 
-// Adding "mousedown" event on every "Menu button"
-menuItems.forEach((item, ind) => {
-  item.addEventListener("mousedown", (e) => {
-    if (e.target === popupMenu.options.activeItem) {
-      hidePopupMenu();
-      return;
-    }
-
-    showPopupMenu(e.target, ind);
-  });
-});
-
-// Adding "mouseenter" event on every "Menu button"
-menuItems.forEach((item, ind) => {
-  item.addEventListener("mouseenter", (e) => {
-    if (popupMenu.options.activeItem) {
-      popupMenu.options.activeBlock.remove();
-      popupMenu.options.activeItem.classList.remove("menu__item_active");
-
-      showPopupMenu(e.target, ind);
-    }
-  });
-});
-
-// Adding "click" event on document
-document.addEventListener("click", (e) => {
-  if (
-    popupMenu.options.activeItem &&
-    popupMenu.options.activeItem !== e.target
-  ) {
-    hidePopupMenu();
+mapBody.addEventListener("mousewheel", (e) => {
+  if (e.ctrlKey) {
+    e.preventDefault();
   }
 });
 
-function showPopupMenu(target, ind) {
-  switch (ind) {
-    // File button
-    case 0:
-      popupMenu.options.activeBlock = popupMenu.file.block;
-      break;
-    // Functions button
-    case 1:
-      popupMenu.options.activeBlock = popupMenu.functions.block;
-      break;
+mapBody.onmouseenter = () => {
+  mapBody.querySelector(".map__body-grid-attach").style.visibility = "visible";
+};
+
+mapBody.onmouseleave = () => {
+  mapBody.querySelector(".map__body-grid-attach").style.visibility = "hidden";
+};
+
+mapBody.onmousemove = (e) => {
+  const xb = document.querySelector(".xb");
+  const yb = document.querySelector(".yb");
+
+  xb.innerHTML = `X: ${e.layerX}`;
+  yb.innerHTML = `Y: ${e.layerY}`;
+
+  if (map.isGridAttach) {
+    map.currentX = Math.round(e.layerX / map.step) * map.step;
+    map.currentY = Math.round(e.layerY / map.step) * map.step;
+  } else {
+    map.currentX = e.layerX;
+    map.currentY = e.layerY;
   }
 
-  popupMenu.options.activeItem = target;
-  target.classList.add("menu__item_active");
-  popupMenu.options.activeBlock.style.left = `${target.offsetLeft}px`;
-  menuBlock.appendChild(popupMenu.options.activeBlock);
-}
+  const point = mapBody.querySelector(".map__body-grid-attach");
 
-function hidePopupMenu() {
-  popupMenu.options.activeItem.classList.remove("menu__item_active");
-  popupMenu.options.activeItem = null;
-  popupMenu.options.activeBlock.remove();
-  popupMenu.options.activeBlock = null;
-}
+  point.setAttribute("cx", map.currentX);
+  point.setAttribute("cy", map.currentY);
 
-(function createPopupMenu() {
-  for (let prop in popupMenu) {
-    if (Array.isArray(popupMenu[prop])) {
-      const popupBlock = document.createElement("div");
-      popupBlock.classList.add("menu__popup-menu");
+  const xc = document.querySelector(".xc");
+  const yc = document.querySelector(".yc");
 
-      popupMenu[prop].forEach((item) => {
-        const button = document.createElement("button");
-        button.classList.add("menu__popup-menu-item");
-        button.textContent = item.name;
-        button.addEventListener(item.event, item.func);
-        popupBlock.appendChild(button);
-      });
+  xc.innerHTML = `Xc: ${map.currentX}`;
+  yc.innerHTML = `Yc: ${map.currentY}`;
+};
 
-      popupMenu[prop].block = popupBlock;
-    }
+const optionsGrid = options.querySelector("#options__item-grid");
+
+optionsGrid.onchange = (e) => {
+  const mapBodyGrid = main.querySelector(".map__body-grid");
+  const grid = mapBodyGrid.querySelector("rect");
+
+  if (e.target.checked) {
+    grid.style.visibility = "visible";
+  } else {
+    grid.style.visibility = "hidden";
   }
-})();
+};
+
+const optionsMapImage = options.querySelector("#options__item-map-image");
+
+optionsMapImage.onchange = (e) => {
+  if (e.target.checked) {
+    mapImage.classList.remove("hide");
+  } else {
+    mapImage.classList.add("hide");
+  }
+};
+
+const optionsGridAttach = options.querySelector("#options__item-grid-attach");
+
+optionsGridAttach.onchange = (e) => {
+  map.isGridAttach = e.target.checked;
+};
