@@ -10,11 +10,29 @@ const sidebar = document.querySelector(".sidebar");
 const map = {
   zoom: 100,
   step: 5,
-  isCoordsCalculated: false,
+  calcCoords: {
+    markCount: 0,
+    coordCount: 0,
+    isCoordsCalculated: false,
+    0: {
+      htmlBlock: null,
+      layerX: 0,
+      layerY: 0,
+      realX: 0,
+      realY: 0,
+    },
+    1: {
+      htmlBlock: null,
+      layerX: 0,
+      layerY: 0,
+      realX: 0,
+      realY: 0,
+    },
+  },
   isMarked: false,
   isGridAttach: false,
-  curentX: 0,
-  currentY: 0,
+  layerX: 0,
+  layerY: 0,
 };
 
 mapBody.addEventListener("mousewheel", (e) => {
@@ -39,23 +57,23 @@ mapBody.onmousemove = (e) => {
   yb.innerHTML = `Y: ${e.layerY}`;
 
   if (map.isGridAttach) {
-    map.currentX = Math.round(e.layerX / map.step) * map.step;
-    map.currentY = Math.round(e.layerY / map.step) * map.step;
+    map.layerX = Math.round(e.layerX / map.step) * map.step;
+    map.layerY = Math.round(e.layerY / map.step) * map.step;
   } else {
-    map.currentX = e.layerX;
-    map.currentY = e.layerY;
+    map.layerX = e.layerX;
+    map.layerY = e.layerY;
   }
 
   const point = mapBody.querySelector(".map__body-grid-attach");
 
-  point.setAttribute("cx", map.currentX);
-  point.setAttribute("cy", map.currentY);
+  point.setAttribute("cx", map.layerX);
+  point.setAttribute("cy", map.layerY);
 
   const xc = document.querySelector(".xc");
   const yc = document.querySelector(".yc");
 
-  xc.innerHTML = `Xc: ${map.currentX}`;
-  yc.innerHTML = `Yc: ${map.currentY}`;
+  xc.innerHTML = `Xc: ${map.layerX}`;
+  yc.innerHTML = `Yc: ${map.layerY}`;
 };
 
 const optionsGrid = options.querySelector("#options__item-grid");
@@ -74,11 +92,7 @@ optionsGrid.onchange = (e) => {
 const optionsMapImage = options.querySelector("#options__item-map-image");
 
 optionsMapImage.onchange = (e) => {
-  if (e.target.checked) {
-    mapImage.classList.remove("hide");
-  } else {
-    mapImage.classList.add("hide");
-  }
+  mapImage.hidden = !e.target.checked;
 };
 
 const optionsGridAttach = options.querySelector("#options__item-grid-attach");

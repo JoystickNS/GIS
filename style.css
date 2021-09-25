@@ -85,7 +85,7 @@ body {
   top: 61px;
   left: 0px;
   bottom: 0px;
-  right: 0px;
+  width: 300px;
   background-color: #fbfbfb;
   border-right: 1px solid #e5e5e5;
 }
@@ -121,22 +121,63 @@ body {
   padding: 5px;
 }
 
+.popup-window__coords-form {
+  display: flex;
+  flex-direction: column;
+}
+
 .popup-window__coords {
   display: flex;
+  width: 100%;
   flex-direction: row;
-  align-items: center;
-  justify-content: space-evenly;
-  padding: 5px;
+  justify-content: space-around;
 }
 
 .popup-window__coords-local p {
   margin: 0px;
 }
 
-.popup-window__coord_dodgerblue {
+.popup-window__result-msg {
+  text-align: center;
+  margin: 10px 0px;
+}
+
+.popup-window__buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.popup-window__delete-coord {
+  border-color: red;
+}
+
+.popup-window__delete-coord:hover {
+  background-color: red;
+}
+
+.popup-window__save-button {
+  border-color: green;
+}
+
+.popup-window__save-button:hover {
+  background-color: green;
+}
+
+.button {
+  transition: 0.5s;
+  border-radius: 4px;
+  height: 30px;
+}
+
+.button:hover {
+  transition: 0.5s;
+  color: white;
+}
+
+.dodgerblue {
   color: dodgerblue;
 }
 
-.hide {
-  display: none;
+.unvisible {
+  visibility: hidden;
 }

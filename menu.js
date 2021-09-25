@@ -1,3 +1,5 @@
+"use strict";
+
 const popupMenu = {
   options: {
     activeItem: null,
@@ -53,54 +55,116 @@ const popupMenu = {
         p.style.color = "red";
         sidebar.appendChild(p);
         this.disabled = true;
-        if (!main.onclick) {
-          main.onclick = () => {
-            if (!map.isMarked) {
-              const mark = document.createElementNS(xmlns, "image");
+        if (!mapBody.onclick) {
+          mapBody.onclick = (e) => {
+            function deleteMark(mark) {}
 
+            if (e.target === mapBody.querySelector(".map__body-mark")) {
+              const popupWindow = mapBody.querySelector(".popup-window");
+              if (popupWindow) {
+                popupWindow.remove();
+              }
+              e.target.remove();
+              map.calcCoords.count--;
+              return;
+            }
+
+            if (map.calcCoords.markCount < 2) {
+              const mark = document.createElementNS(xmlns, "image");
               mark.classList.add("map__body-mark");
               mark.setAttribute("href", "point.svg");
-              mark.setAttribute("x", map.currentX - 8);
-              mark.setAttribute("y", map.currentY - 16);
+              mark.setAttribute("x", map.layerX - 8);
+              mark.setAttribute("y", map.layerY - 16);
+              map.calcCoords.markCount++;
 
               if (!mark.onmouseenter) {
                 mark.onmouseenter = (e) => {
                   if (e.relatedTarget !== main.querySelector(".popup-window")) {
-                    const popupWindow = document.createElement("div");
-
                     const x = +e.target.getAttribute("x");
                     const y = +e.target.getAttribute("y");
-
+                    const html = `
+                      <form class="popup-window__coords-form" method="POST">
+                        <section class="popup-window__coords">
+                          <article class="popup-window__coords-layer">
+                            <p>Экранный X: <span class="dodgerblue">${
+                              x + 8
+                            }</span></p>
+                            <p>Экранный Y: <span class="dodgerblue">${
+                              y + 16
+                            }</span></p>
+                          </article>
+                          <article class="popup-window__coords-real">
+                            <label style="display:block" for="real-coord-x">
+                              Реальный<span class="dodgerblue"> Х:</span>
+                            </label>
+                            <input type="text" id="real-coord-x" name="realX" autocomplete="off">
+                            <label style="display:block" for="real-coord-y">
+                              Реальный<span class="dodgerblue"> Y:</span> 
+                            </label>
+                            <input type="text" id="real-coord-y" name="realY" autocomplete="off">
+                          </article>
+                        </section>
+                        <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
+                        <div class="popup-window__buttons">
+                          <button class="popup-window__delete-coord button" type="button" hidden>Удалить координаты</button>
+                          <button class="popup-window__save-button button" type="submit">Сохранить координаты</button>
+                        </div>
+                      </form>`;
+                    const popupWindow = document.createElement("div");
                     popupWindow.classList.add("popup-window");
+                    popupWindow.innerHTML = html;
+
+                    const form = popupWindow.querySelector(
+                      ".popup-window__coords-form"
+                    );
+
+                    // Form data processing
+                    form.onsubmit = (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(form);
+                      const coordCount = map.calcCoords.coordCount;
+                      const realXInput = form.elements["realX"];
+                      const realYInput = form.elements["realY"];
+
+                      map.calcCoords[coordCount].htmlBlock = popupWindow;
+                      map.calcCoords[coordCount].layerX = map.layerX;
+                      map.calcCoords[coordCount].layerY = map.layerY;
+                      map.calcCoords[coordCount].realX = +formData.get("realX");
+                      map.calcCoords[coordCount].realY = +formData.get("realY");
+                      map.calcCoords.count++;
+
+                      realXInput.disabled = true;
+                      realYInput.disabled = true;
+
+                      const formMsg = form.querySelector(
+                        ".popup-window__result-msg"
+                      );
+                      formMsg.textContent = "Координаты сохранены";
+                      formMsg.style.color = "green";
+                      formMsg.classList.remove("unvisible");
+
+                      const saveBtn = form.querySelector(
+                        ".popup-window__save-button"
+                      );
+                      saveBtn.hidden = true;
+
+                      const deleteBtn = form.querySelector(
+                        ".popup-window__delete-coord"
+                      );
+                      deleteBtn.hidden = false;
+
+                      deleteBtn.onclick = () => {
+                        realXInput.disabled = false;
+                        realYInput.disabled = false;
+                        formMsg.classList.add("unvisible");
+                        deleteBtn.hidden = true;
+                        saveBtn.hidden = false;
+                      };
+                    };
+
                     main.appendChild(popupWindow);
 
-                    const section = document.createElement("section");
-                    section.classList.add("popup-window__coords");
-
-                    const article = document.createElement("article");
-                    article.classList.add("popup-window__coords-local");
-
-                    const px = document.createElement("p");
-                    px.textContent = "Локальный Х: ";
-                    const py = document.createElement("p");
-                    py.textContent = "Локальный Y: ";
-
-                    const spanX = document.createElement("span");
-                    spanX.classList.add("popup-window__coord_dodgerblue");
-                    spanX.textContent = +mark.getAttribute("x") + 8;
-                    const spanY = spanX.cloneNode(true);
-                    spanY.textContent = +mark.getAttribute("y") + 16;
-
-                    px.appendChild(spanX);
-                    py.appendChild(spanY);
-
-                    article.appendChild(px);
-                    article.appendChild(py);
-
-                    section.appendChild(article);
-                    debugger;
-                    popupWindow.appendChild(section);
-
+                    // Calc the position of the popup-window
                     if (x < popupWindow.offsetWidth / 2) {
                       popupWindow.style.left = "0px";
                     } else if (
@@ -130,13 +194,13 @@ const popupMenu = {
                   const popupWindow = main.querySelector(".popup-window");
 
                   if (e.relatedTarget !== popupWindow) {
-                    popupWindow.remove();
+                    //popupWindow.remove();
                   }
 
                   if (!popupWindow.onmouseleave) {
                     popupWindow.onmouseleave = (e) => {
                       if (e.relatedTarget !== mark) {
-                        popupWindow.remove();
+                        //popupWindow.remove();
                       }
                     };
                   }
@@ -146,6 +210,7 @@ const popupMenu = {
               mapBody.appendChild(mark);
               map.isMarked = true;
             } else {
+              map.calcCoords.markCount--;
               const popupWindow = main.querySelector(".popup-window");
 
               if (popupWindow) {
