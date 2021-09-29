@@ -79,29 +79,8 @@
         </g>
       </svg>
     </main>
-    <div class="hide">
+    <div hidden>
       <input type="file" />
-    </div>
-    <div style="display: none" class="popup-window">
-      <form class="popup-window__coords-form" method="POST">
-        <section class="popup-window__coords">
-          <article class="popup-window__coords-layer">
-            <p>Экранный X: <span class="dodgerblue">${x}</span></p>
-            <p>Экранный Y: <span class="dodgerblue">${y}</span></p>
-          </article>
-          <article class="popup-window__coords-real">
-            <label style="display:block" for="real-coord-x">Реальный Х: </label>
-            <input type="text" id="real-coord-x" name="realX" autocomplete="off" autofocus>
-            <label style="display:block" for="real-coord-y">Реальный Y: </label>
-            <input type="text" id="real-coord-y" name="realY" autocomplete="off">
-          </article>
-        </section>
-        <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
-        <div class="popup-window__buttons">
-          <button class="popup-window__delete-coord button" type="button">Удалить координаты</button>
-          <button class="popup-window__save-button button" type="submit">Сохранить координаты</button>
-        </div>
-      </form>
     </div>
     <script src="app.js"></script>
     <script src="menu.js"></script>

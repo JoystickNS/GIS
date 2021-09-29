@@ -53,66 +53,91 @@ const popupMenu = {
         const p = document.createElement("p");
         p.innerHTML = "Задание плоских координат";
         p.style.color = "red";
-        sidebar.appendChild(p);
+        sidebar.append(p);
         this.disabled = true;
         if (!mapBody.onclick) {
-          mapBody.onclick = (e) => {
-            function deleteMark(mark) {}
+          mapBody.onmouseup = (e) => {
+            if (e.target === mapBody.querySelector(".map__body-mark")) return;
 
-            if (e.target === mapBody.querySelector(".map__body-mark")) {
-              const popupWindow = mapBody.querySelector(".popup-window");
-              if (popupWindow) {
-                popupWindow.remove();
-              }
-              e.target.remove();
-              map.calcCoords.count--;
-              return;
-            }
-
+            // If 2 markers have not been set yet
             if (map.calcCoords.markCount < 2) {
+              const coords = map.calcCoords.coords;
+              const freeCoord = coords.find((coord) => coord.mark === null);
+
               const mark = document.createElementNS(xmlns, "image");
               mark.classList.add("map__body-mark");
               mark.setAttribute("href", "point.svg");
               mark.setAttribute("x", map.layerX - 8);
               mark.setAttribute("y", map.layerY - 16);
+              mapBody.append(mark);
               map.calcCoords.markCount++;
+
+              freeCoord.mark = mark;
+              freeCoord.layerX = map.layerX;
+              freeCoord.layerY = map.layerY;
+
+              if (map.calcCoords.markCount === 2) {
+                const line = document.createElementNS(xmlns, "line");
+                line.classList.add("map__body-mark-dist");
+                line.setAttribute("x1", coords[0].layerX);
+                line.setAttribute("y1", coords[0].layerY);
+                line.setAttribute("x2", coords[1].layerX);
+                line.setAttribute("y2", coords[1].layerY);
+                line.style.stroke = "black";
+                line.style.strokeWidth = "1px";
+                mapBody.append(line);
+              }
 
               if (!mark.onmouseenter) {
                 mark.onmouseenter = (e) => {
+                  // If the hover over the marker was not made from a pop-up window
                   if (e.relatedTarget !== main.querySelector(".popup-window")) {
-                    const x = +e.target.getAttribute("x");
-                    const y = +e.target.getAttribute("y");
+                    const knownMark = coords.find((coord) => {
+                      return coord.mark === mark && coord.domBlock !== null;
+                    });
+
+                    // If the marker is known, then we display its window and exit
+                    if (knownMark) {
+                      main.append(knownMark.domBlock);
+                      return;
+                    }
+
+                    const x = +mark.getAttribute("x");
+                    const y = +mark.getAttribute("y");
                     const html = `
-                      <form class="popup-window__coords-form" method="POST">
-                        <section class="popup-window__coords">
-                          <article class="popup-window__coords-layer">
-                            <p>Экранный X: <span class="dodgerblue">${
-                              x + 8
-                            }</span></p>
-                            <p>Экранный Y: <span class="dodgerblue">${
-                              y + 16
-                            }</span></p>
-                          </article>
-                          <article class="popup-window__coords-real">
-                            <label style="display:block" for="real-coord-x">
-                              Реальный<span class="dodgerblue"> Х:</span>
-                            </label>
-                            <input type="text" id="real-coord-x" name="realX" autocomplete="off">
-                            <label style="display:block" for="real-coord-y">
-                              Реальный<span class="dodgerblue"> Y:</span> 
-                            </label>
-                            <input type="text" id="real-coord-y" name="realY" autocomplete="off">
-                          </article>
-                        </section>
-                        <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
-                        <div class="popup-window__buttons">
-                          <button class="popup-window__delete-coord button" type="button" hidden>Удалить координаты</button>
-                          <button class="popup-window__save-button button" type="submit">Сохранить координаты</button>
-                        </div>
-                      </form>`;
-                    const popupWindow = document.createElement("div");
-                    popupWindow.classList.add("popup-window");
-                    popupWindow.innerHTML = html;
+                      <div class="popup-window">
+                        <form class="popup-window__coords-form" method="POST">
+                          <section class="popup-window__coords">
+                            <article class="popup-window__coords-layer">
+                              <p>Экранный X: <span class="dodgerblue">${
+                                x + 8
+                              }</span></p>
+                              <p>Экранный Y: <span class="dodgerblue">${
+                                y + 16
+                              }</span></p>
+                            </article>
+                            <article class="popup-window__coords-real">
+                              <label style="display:block" for="real-coord-x">
+                                Реальный<span class="dodgerblue"> Х:</span>
+                              </label>
+                              <input type="text" id="real-coord-x" name="realX" autocomplete="off">
+                              <label style="display:block" for="real-coord-y">
+                                Реальный<span class="dodgerblue"> Y:</span> 
+                              </label>
+                              <input type="text" id="real-coord-y" name="realY" autocomplete="off">
+                            </article>
+                          </section>
+                          <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
+                          <div class="popup-window__buttons">
+                            <button class="popup-window__delete-coord button button_red-border" type="button" hidden>Удалить координаты</button>
+                            <button class="popup-window__save-button button button_green-border" type="submit">Сохранить координаты</button>
+                          </div>
+                        </form>
+                      </div>`;
+                    main.insertAdjacentHTML("beforeend", html);
+
+                    const popupWindow = main.querySelector(".popup-window");
+                    freeCoord.domBlock = popupWindow;
 
                     const form = popupWindow.querySelector(
                       ".popup-window__coords-form"
@@ -121,17 +146,16 @@ const popupMenu = {
                     // Form data processing
                     form.onsubmit = (e) => {
                       e.preventDefault();
+
                       const formData = new FormData(form);
-                      const coordCount = map.calcCoords.coordCount;
                       const realXInput = form.elements["realX"];
                       const realYInput = form.elements["realY"];
 
-                      map.calcCoords[coordCount].htmlBlock = popupWindow;
-                      map.calcCoords[coordCount].layerX = map.layerX;
-                      map.calcCoords[coordCount].layerY = map.layerY;
-                      map.calcCoords[coordCount].realX = +formData.get("realX");
-                      map.calcCoords[coordCount].realY = +formData.get("realY");
-                      map.calcCoords.count++;
+                      freeCoord.isSaved = true;
+                      freeCoord.realX = +formData.get("realX");
+                      freeCoord.realY = +formData.get("realY");
+                      mark.dataset.markStatus = "saved";
+                      map.calcCoords.savedCount++;
 
                       realXInput.disabled = true;
                       realYInput.disabled = true;
@@ -153,18 +177,60 @@ const popupMenu = {
                       );
                       deleteBtn.hidden = false;
 
+                      if (map.calcCoords.savedCount === 2) {
+                        const html = `      
+                        <div class="map__confirm-calc">
+                          <button class="map__confirm-calc-bt button button_green-border">
+                            Рассчитать реальные координаты
+                          </button>
+                        </div>`;
+                        main.insertAdjacentHTML("beforeend", html);
+                        const confirmBlock =
+                          main.querySelector(".map__confirm-calc");
+                        const confirmBt = confirmBlock.querySelector(
+                          ".map__confirm-calc-bt"
+                        );
+
+                        confirmBt.onclick = () => {
+                          const layerDist = Math.sqrt(
+                            (coords[0].layerX - coords[1].layerX) ** 2 +
+                              (coords[0].layerY - coords[1].layerY) ** 2
+                          );
+                          const realDist = Math.sqrt(
+                            (coords[0].realX - coords[1].realX) ** 2 +
+                              (coords[0].realY - coords[1].realY) ** 2
+                          );
+
+                          map.mPerPixel = realDist / layerDist;
+                          map.zeroRealCoord.x =
+                            coords[0].realX - map.mPerPixel * coords[0].layerX;
+                          map.zeroRealCoord.y =
+                            coords[0].realY - map.mPerPixel * coords[0].layerY;
+
+                          map.isCoordsCalculated = true;
+
+                          confirmBlock.style.top = "-80px";
+                          setTimeout(() => confirmBlock.remove(), 800);
+                        };
+                        setTimeout(() => (confirmBlock.style.top = "0px"), 100);
+                      }
+
                       deleteBtn.onclick = () => {
+                        if (map.calcCoords.savedCount === 2) {
+                          main.querySelector(".map__confirm-calc").remove();
+                        }
                         realXInput.disabled = false;
                         realYInput.disabled = false;
                         formMsg.classList.add("unvisible");
                         deleteBtn.hidden = true;
                         saveBtn.hidden = false;
+                        freeCoord.isSaved = false;
+                        map.calcCoords.savedCount--;
+                        delete mark.dataset.markStatus;
                       };
                     };
 
-                    main.appendChild(popupWindow);
-
-                    // Calc the position of the popup-window
+                    // Calculates the position of the popup-window
                     if (x < popupWindow.offsetWidth / 2) {
                       popupWindow.style.left = "0px";
                     } else if (
@@ -189,36 +255,42 @@ const popupMenu = {
                 };
               }
 
+              if (!mark.onclick) {
+                mark.onclick = (e) => {
+                  if (mark.dataset.markStatus !== "saved") {
+                    if (map.calcCoords.markCount === 2) {
+                      mapBody.querySelector(".map__body-mark-dist").remove();
+                    }
+                    const coord = coords.find((i) => i.mark === mark);
+                    coord.domBlock = null;
+                    coord.mark = null;
+                    const popupWindow = main.querySelector(".popup-window");
+                    if (popupWindow) {
+                      popupWindow.remove();
+                    }
+                    e.target.remove();
+                    map.calcCoords.markCount--;
+                  }
+                };
+              }
+
               if (!mark.onmouseleave) {
                 mark.onmouseleave = (e) => {
                   const popupWindow = main.querySelector(".popup-window");
 
                   if (e.relatedTarget !== popupWindow) {
-                    //popupWindow.remove();
+                    popupWindow.remove();
                   }
 
                   if (!popupWindow.onmouseleave) {
                     popupWindow.onmouseleave = (e) => {
                       if (e.relatedTarget !== mark) {
-                        //popupWindow.remove();
+                        popupWindow.remove();
                       }
                     };
                   }
                 };
               }
-
-              mapBody.appendChild(mark);
-              map.isMarked = true;
-            } else {
-              map.calcCoords.markCount--;
-              const popupWindow = main.querySelector(".popup-window");
-
-              if (popupWindow) {
-                popupWindow.remove();
-              }
-
-              mapBody.querySelector(".map__body-mark").remove();
-              map.isMarked = false;
             }
           };
         }
@@ -285,7 +357,7 @@ function showPopupMenu(target, ind) {
   popupMenu.options.activeItem = target;
   target.classList.add("menu__item_active");
   popupMenu.options.activeBlock.style.left = `${target.offsetLeft}px`;
-  menuBlock.appendChild(popupMenu.options.activeBlock);
+  menuBlock.append(popupMenu.options.activeBlock);
 }
 
 function hidePopupMenu() {
@@ -306,7 +378,7 @@ function hidePopupMenu() {
         button.classList.add("menu__popup-menu-item");
         button.textContent = item.name;
         button.addEventListener(item.event, item.func);
-        popupBlock.appendChild(button);
+        popupBlock.append(button);
       });
 
       popupMenu[prop].block = popupBlock;

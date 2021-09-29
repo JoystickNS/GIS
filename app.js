@@ -10,29 +10,42 @@ const sidebar = document.querySelector(".sidebar");
 const map = {
   zoom: 100,
   step: 5,
+  mPerPixel: 0,
   calcCoords: {
     markCount: 0,
-    coordCount: 0,
-    isCoordsCalculated: false,
-    0: {
-      htmlBlock: null,
-      layerX: 0,
-      layerY: 0,
-      realX: 0,
-      realY: 0,
-    },
-    1: {
-      htmlBlock: null,
-      layerX: 0,
-      layerY: 0,
-      realX: 0,
-      realY: 0,
-    },
+    savedCount: 0,
+    coords: [
+      {
+        isSaved: false,
+        mark: null,
+        domBlock: null,
+        layerX: 0,
+        layerY: 0,
+        realX: 0,
+        realY: 0,
+      },
+      {
+        isSaved: false,
+        mark: null,
+        domBlock: null,
+        layerX: 0,
+        layerY: 0,
+        realX: 0,
+        realY: 0,
+      },
+    ],
   },
+  zeroRealCoord: {
+    x: 0,
+    y: 0,
+  },
+  isCoordsCalculated: false,
   isMarked: false,
   isGridAttach: false,
   layerX: 0,
   layerY: 0,
+  realX: 0,
+  realY: 0,
 };
 
 mapBody.addEventListener("mousewheel", (e) => {
@@ -74,6 +87,18 @@ mapBody.onmousemove = (e) => {
 
   xc.innerHTML = `Xc: ${map.layerX}`;
   yc.innerHTML = `Yc: ${map.layerY}`;
+
+  const realX = document.querySelector(".realX");
+  const realY = document.querySelector(".realY");
+
+  if (map.isCoordsCalculated) {
+    realX.innerHTML = `RealX: ${
+      map.zeroRealCoord.x + e.layerX * map.mPerPixel
+    }`;
+    realY.innerHTML = `RealY: ${
+      map.zeroRealCoord.y + e.layerY * map.mPerPixel
+    }`;
+  }
 };
 
 const optionsGrid = options.querySelector("#options__item-grid");
