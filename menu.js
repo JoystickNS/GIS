@@ -203,14 +203,26 @@ const popupMenu = {
 
                           map.mPerPixel = realDist / layerDist;
                           map.zeroRealCoord.x =
-                            coords[0].realX - map.mPerPixel * coords[0].layerX;
+                            coords[0].realX - map.mPerPixel * coords[0].layerY;
                           map.zeroRealCoord.y =
-                            coords[0].realY - map.mPerPixel * coords[0].layerY;
+                            coords[0].realY - map.mPerPixel * coords[0].layerX;
 
                           map.isCoordsCalculated = true;
 
                           confirmBlock.style.top = "-80px";
                           setTimeout(() => confirmBlock.remove(), 800);
+
+                          mapBody.addEventListener("mousemove", (e) => {
+                            const realX = document.querySelector(".realX");
+                            const realY = document.querySelector(".realY");
+
+                            realX.innerHTML = `RealX: ${
+                              map.zeroRealCoord.x + e.layerY * map.mPerPixel
+                            }`;
+                            realY.innerHTML = `RealY: ${
+                              map.zeroRealCoord.y + e.layerX * map.mPerPixel
+                            }`;
+                          });
                         };
                         setTimeout(() => (confirmBlock.style.top = "0px"), 100);
                       }

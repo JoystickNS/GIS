@@ -87,18 +87,6 @@ mapBody.onmousemove = (e) => {
 
   xc.innerHTML = `Xc: ${map.layerX}`;
   yc.innerHTML = `Yc: ${map.layerY}`;
-
-  const realX = document.querySelector(".realX");
-  const realY = document.querySelector(".realY");
-
-  if (map.isCoordsCalculated) {
-    realX.innerHTML = `RealX: ${
-      map.zeroRealCoord.x + e.layerX * map.mPerPixel
-    }`;
-    realY.innerHTML = `RealY: ${
-      map.zeroRealCoord.y + e.layerY * map.mPerPixel
-    }`;
-  }
 };
 
 const optionsGrid = options.querySelector("#options__item-grid");
