@@ -14,6 +14,7 @@ const map = {
   calcCoords: {
     markCount: 0,
     savedCount: 0,
+    //freeCoords: new Set([0, 1, 2, 3]), FIXME:
     coords: [
       {
         isSaved: false,
@@ -21,8 +22,8 @@ const map = {
         domBlock: null,
         layerX: 0,
         layerY: 0,
-        realX: 0,
-        realY: 0,
+        realX: 7055092.487,
+        realY: 9631255.866,
       },
       {
         isSaved: false,
@@ -30,8 +31,26 @@ const map = {
         domBlock: null,
         layerX: 0,
         layerY: 0,
-        realX: 0,
-        realY: 0,
+        realX: 7055292.015,
+        realY: 9631879.309,
+      },
+      {
+        isSaved: false,
+        mark: null,
+        domBlock: null,
+        layerX: 0,
+        layerY: 0,
+        realX: 7054867.39,
+        realY: 9631790.191,
+      },
+      {
+        isSaved: false,
+        mark: null,
+        domBlock: null,
+        layerX: 0,
+        layerY: 0,
+        realX: 7054829.411,
+        realY: 9631143.515,
       },
     ],
   },

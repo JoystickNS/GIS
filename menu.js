@@ -1,5 +1,3 @@
-"use strict";
-
 const popupMenu = {
   options: {
     activeItem: null,
@@ -59,8 +57,8 @@ const popupMenu = {
           mapBody.onmouseup = (e) => {
             if (e.target === mapBody.querySelector(".map__body-mark")) return;
 
-            // If 2 markers have not been set yet
-            if (map.calcCoords.markCount < 2) {
+            // If 4 markers have not been set yet
+            if (map.calcCoords.markCount < 4) {
               const coords = map.calcCoords.coords;
               const freeCoord = coords.find((coord) => coord.mark === null);
 
@@ -76,17 +74,92 @@ const popupMenu = {
               freeCoord.layerX = map.layerX;
               freeCoord.layerY = map.layerY;
 
-              if (map.calcCoords.markCount === 2) {
-                const line = document.createElementNS(xmlns, "line");
-                line.classList.add("map__body-mark-dist");
-                line.setAttribute("x1", coords[0].layerX);
-                line.setAttribute("y1", coords[0].layerY);
-                line.setAttribute("x2", coords[1].layerX);
-                line.setAttribute("y2", coords[1].layerY);
-                line.style.stroke = "black";
-                line.style.strokeWidth = "1px";
-                mapBody.append(line);
+              // FIXME:
+              map.calcCoords.savedCount++;
+              if (map.calcCoords.savedCount === 4) {
+                const html = `      
+                <div class="map__confirm-calc">
+                  <button class="map__confirm-calc-bt button button_green-border">
+                    Рассчитать реальные координаты
+                  </button>
+                </div>`;
+                main.insertAdjacentHTML("beforeend", html);
+                const confirmBlock = main.querySelector(".map__confirm-calc");
+                const confirmBt = confirmBlock.querySelector(
+                  ".map__confirm-calc-bt"
+                );
+
+                confirmBt.onclick = () => {
+                  const layerDist = Math.sqrt(
+                    (coords[0].layerX - coords[1].layerX) ** 2 +
+                      (coords[0].layerY - coords[1].layerY) ** 2
+                  );
+                  const realDist = Math.sqrt(
+                    (coords[0].realX - coords[1].realX) ** 2 +
+                      (coords[0].realY - coords[1].realY) ** 2
+                  );
+
+                  let minX = Infinity;
+                  let minY = Infinity;
+                  let maxX = -Infinity;
+                  let maxY = -Infinity;
+
+                  coords.forEach((coord) => {
+                    if (coord.layerX < minX) minX = coord.layerX;
+                    else if (coord.layerX > maxX) maxX = coord.layerX;
+
+                    if (coord.layerY < minY) minY = coord.layerY;
+                    else if (coord.layerY > maxY) maxY = coord.layerY;
+                  });
+
+                  const rect = document.createElementNS(xmlns, "rect");
+                  rect.setAttribute("x", minX);
+                  rect.setAttribute("y", minY);
+                  rect.setAttribute("width", maxX - minX);
+                  rect.setAttribute("height", maxY - minY);
+                  rect.setAttribute("fill", "none");
+                  rect.setAttribute("stroke", "black");
+
+                  mapBody.append(rect);
+
+                  map.mPerPixel = realDist / layerDist;
+                  map.zeroRealCoord.x =
+                    coords[0].realX - map.mPerPixel * coords[0].layerY;
+                  map.zeroRealCoord.y =
+                    coords[0].realY - map.mPerPixel * coords[0].layerX;
+
+                  map.isCoordsCalculated = true;
+
+                  confirmBlock.style.top = "-80px";
+                  setTimeout(() => confirmBlock.remove(), 800);
+
+                  mapBody.addEventListener("mousemove", (e) => {
+                    const realX = document.querySelector(".realX");
+                    const realY = document.querySelector(".realY");
+
+                    realX.innerHTML = `RealX: ${
+                      map.zeroRealCoord.x + e.layerY * map.mPerPixel
+                    }`;
+                    realY.innerHTML = `RealY: ${
+                      map.zeroRealCoord.y + e.layerX * map.mPerPixel
+                    }`;
+                  });
+                };
+                setTimeout(() => (confirmBlock.style.top = "0px"), 100);
               }
+              // FIXME:
+
+              // if (map.calcCoords.markCount === 4) {
+              //   const line = document.createElementNS(xmlns, "line");
+              //   line.classList.add("map__body-mark-dist");
+              //   line.setAttribute("x1", coords[0].layerX);
+              //   line.setAttribute("y1", coords[0].layerY);
+              //   line.setAttribute("x2", coords[1].layerX);
+              //   line.setAttribute("y2", coords[1].layerY);
+              //   line.style.stroke = "black";
+              //   line.style.strokeWidth = "1px";
+              //   mapBody.append(line);
+              // }
 
               if (!mark.onmouseenter) {
                 mark.onmouseenter = (e) => {
@@ -177,7 +250,7 @@ const popupMenu = {
                       );
                       deleteBtn.hidden = false;
 
-                      if (map.calcCoords.savedCount === 2) {
+                      if (map.calcCoords.savedCount === 4) {
                         const html = `      
                         <div class="map__confirm-calc">
                           <button class="map__confirm-calc-bt button button_green-border">
@@ -228,7 +301,7 @@ const popupMenu = {
                       }
 
                       deleteBtn.onclick = () => {
-                        if (map.calcCoords.savedCount === 2) {
+                        if (map.calcCoords.savedCount === 4) {
                           main.querySelector(".map__confirm-calc").remove();
                         }
                         realXInput.disabled = false;
@@ -270,7 +343,7 @@ const popupMenu = {
               if (!mark.onclick) {
                 mark.onclick = (e) => {
                   if (mark.dataset.markStatus !== "saved") {
-                    if (map.calcCoords.markCount === 2) {
+                    if (map.calcCoords.markCount === 4) {
                       mapBody.querySelector(".map__body-mark-dist").remove();
                     }
                     const coord = coords.find((i) => i.mark === mark);
