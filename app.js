@@ -9,13 +9,12 @@ const sidebar = document.querySelector(".sidebar");
 
 const map = {
   zoom: 100,
-  step: 5,
+  step: 10,
   mPerPixel: 0,
   calcCoords: {
     markCount: 0,
     savedCount: 0,
-    //freeCoords: new Set([0, 1, 2, 3]), FIXME:
-    coords: [
+    markCoords: [
       {
         isSaved: false,
         mark: null,
@@ -34,24 +33,24 @@ const map = {
         realX: 7055292.015,
         realY: 9631879.309,
       },
-      {
-        isSaved: false,
-        mark: null,
-        domBlock: null,
-        layerX: 0,
-        layerY: 0,
-        realX: 7054867.39,
-        realY: 9631790.191,
-      },
-      {
-        isSaved: false,
-        mark: null,
-        domBlock: null,
-        layerX: 0,
-        layerY: 0,
-        realX: 7054829.411,
-        realY: 9631143.515,
-      },
+      // {
+      //   isSaved: false,
+      //   mark: null,
+      //   domBlock: null,
+      //   layerX: 0,
+      //   layerY: 0,
+      //   realX: 7054867.39,
+      //   realY: 9631790.191,
+      // },
+      // {
+      //   isSaved: false,
+      //   mark: null,
+      //   domBlock: null,
+      //   layerX: 0,
+      //   layerY: 0,
+      //   realX: 7054829.411,
+      //   realY: 9631143.515,
+      // },
     ],
   },
   zeroRealCoord: {

@@ -1,10 +1,15 @@
+// const mainMenu = new MainMenu();
+// let menuItem = new MenuItem();
+
 const popupMenu = {
   options: {
     activeItem: null,
     activeBlock: null,
   },
 
+  // Пункт меню "Файл"
   file: [
+    // Пункт меню "Загрузить изображение"
     {
       name: "Загрузить изображение",
       event: "click",
@@ -31,153 +36,71 @@ const popupMenu = {
           };
         }
       },
-      block: null,
     },
+    // Пункт меню "Сохранить"
     {
       name: "Сохранить",
       event: "click",
       func() {
         alert("Сохранить");
       },
-      block: null,
     },
   ],
 
+  // Пункт меню "Функции"
   functions: [
+    // Пункт меню "Задать плоские координаты"
     {
       name: "Задать плоские координаты",
       event: "click",
       func() {
+        const button = this;
         const p = document.createElement("p");
         p.innerHTML = "Задание плоских координат";
         p.style.color = "red";
         sidebar.append(p);
-        this.disabled = true;
-        if (!mapBody.onclick) {
-          mapBody.onmouseup = (e) => {
-            if (e.target === mapBody.querySelector(".map__body-mark")) return;
+        button.disabled = true;
 
-            // If 4 markers have not been set yet
-            if (map.calcCoords.markCount < 4) {
-              const coords = map.calcCoords.coords;
-              const freeCoord = coords.find((coord) => coord.mark === null);
+        // Срабатывает в момент отжатия "Клика" мышки
+        mapBody.onclick = (e) => {
+          const marksCount = 2; // Максимальное количество меток
 
-              const mark = document.createElementNS(xmlns, "image");
-              mark.classList.add("map__body-mark");
-              mark.setAttribute("href", "point.svg");
-              mark.setAttribute("x", map.layerX - 8);
-              mark.setAttribute("y", map.layerY - 16);
-              mapBody.append(mark);
-              map.calcCoords.markCount++;
+          // Если не было установлено marksCount отметок на карте
+          if (
+            map.calcCoords.markCount < marksCount &&
+            !e.target.classList.value.includes("map__body-mark")
+          ) {
+            const markCoords = map.calcCoords.markCoords;
+            const freeCoord = markCoords.find((coord) => coord.mark === null);
 
-              freeCoord.mark = mark;
-              freeCoord.layerX = map.layerX;
-              freeCoord.layerY = map.layerY;
+            const mark = document.createElementNS(xmlns, "image");
+            mark.classList.add("map__body-mark");
+            mark.setAttribute("href", "point.svg");
+            mark.setAttribute("x", map.layerX - 8);
+            mark.setAttribute("y", map.layerY - 16);
+            mapBody.append(mark);
+            map.calcCoords.markCount++;
 
-              // FIXME:
-              map.calcCoords.savedCount++;
-              if (map.calcCoords.savedCount === 4) {
-                const html = `      
-                <div class="map__confirm-calc">
-                  <button class="map__confirm-calc-bt button button_green-border">
-                    Рассчитать реальные координаты
-                  </button>
-                </div>`;
-                main.insertAdjacentHTML("beforeend", html);
-                const confirmBlock = main.querySelector(".map__confirm-calc");
-                const confirmBt = confirmBlock.querySelector(
-                  ".map__confirm-calc-bt"
-                );
+            freeCoord.mark = mark;
+            freeCoord.layerX = map.layerX;
+            freeCoord.layerY = map.layerY;
 
-                confirmBt.onclick = () => {
-                  const layerDist = Math.sqrt(
-                    (coords[0].layerX - coords[1].layerX) ** 2 +
-                      (coords[0].layerY - coords[1].layerY) ** 2
-                  );
-                  const realDist = Math.sqrt(
-                    (coords[0].realX - coords[1].realX) ** 2 +
-                      (coords[0].realY - coords[1].realY) ** 2
-                  );
+            // Срабатывает при наведении на отметку на карте
+            mark.onmouseenter = (e) => {
+              // Если наведение на отметку было сделано не с всплывающего окна
+              if (e.relatedTarget !== main.querySelector(".popup-window")) {
+                const savedMark = markCoords.find((coord) => {
+                  return coord.mark === mark && coord.domBlock !== null;
+                });
+                // Если отметка была ранее сохранена, то просто отображаем её всплывающее окно и выходим
+                if (savedMark) {
+                  main.append(savedMark.domBlock);
+                  return;
+                }
 
-                  let minX = Infinity;
-                  let minY = Infinity;
-                  let maxX = -Infinity;
-                  let maxY = -Infinity;
-
-                  coords.forEach((coord) => {
-                    if (coord.layerX < minX) minX = coord.layerX;
-                    else if (coord.layerX > maxX) maxX = coord.layerX;
-
-                    if (coord.layerY < minY) minY = coord.layerY;
-                    else if (coord.layerY > maxY) maxY = coord.layerY;
-                  });
-
-                  const rect = document.createElementNS(xmlns, "rect");
-                  rect.setAttribute("x", minX);
-                  rect.setAttribute("y", minY);
-                  rect.setAttribute("width", maxX - minX);
-                  rect.setAttribute("height", maxY - minY);
-                  rect.setAttribute("fill", "none");
-                  rect.setAttribute("stroke", "black");
-
-                  mapBody.append(rect);
-
-                  map.mPerPixel = realDist / layerDist;
-                  map.zeroRealCoord.x =
-                    coords[0].realX - map.mPerPixel * coords[0].layerY;
-                  map.zeroRealCoord.y =
-                    coords[0].realY - map.mPerPixel * coords[0].layerX;
-
-                  map.isCoordsCalculated = true;
-
-                  confirmBlock.style.top = "-80px";
-                  setTimeout(() => confirmBlock.remove(), 800);
-
-                  mapBody.addEventListener("mousemove", (e) => {
-                    const realX = document.querySelector(".realX");
-                    const realY = document.querySelector(".realY");
-
-                    realX.innerHTML = `RealX: ${
-                      map.zeroRealCoord.x + e.layerY * map.mPerPixel
-                    }`;
-                    realY.innerHTML = `RealY: ${
-                      map.zeroRealCoord.y + e.layerX * map.mPerPixel
-                    }`;
-                  });
-                };
-                setTimeout(() => (confirmBlock.style.top = "0px"), 100);
-              }
-              // FIXME:
-
-              // if (map.calcCoords.markCount === 4) {
-              //   const line = document.createElementNS(xmlns, "line");
-              //   line.classList.add("map__body-mark-dist");
-              //   line.setAttribute("x1", coords[0].layerX);
-              //   line.setAttribute("y1", coords[0].layerY);
-              //   line.setAttribute("x2", coords[1].layerX);
-              //   line.setAttribute("y2", coords[1].layerY);
-              //   line.style.stroke = "black";
-              //   line.style.strokeWidth = "1px";
-              //   mapBody.append(line);
-              // }
-
-              if (!mark.onmouseenter) {
-                mark.onmouseenter = (e) => {
-                  // If the hover over the marker was not made from a pop-up window
-                  if (e.relatedTarget !== main.querySelector(".popup-window")) {
-                    const knownMark = coords.find((coord) => {
-                      return coord.mark === mark && coord.domBlock !== null;
-                    });
-
-                    // If the marker is known, then we display its window and exit
-                    if (knownMark) {
-                      main.append(knownMark.domBlock);
-                      return;
-                    }
-
-                    const x = +mark.getAttribute("x");
-                    const y = +mark.getAttribute("y");
-                    const html = `
+                const x = +mark.getAttribute("x");
+                const y = +mark.getAttribute("y");
+                const html = `
                       <div class="popup-window">
                         <form class="popup-window__coords-form" method="POST">
                           <section class="popup-window__coords">
@@ -193,11 +116,11 @@ const popupMenu = {
                               <label style="display:block" for="real-coord-x">
                                 Реальный<span class="dodgerblue"> Х:</span>
                               </label>
-                              <input type="text" id="real-coord-x" name="realX" autocomplete="off">
+                              <input type="text" id="real-coord-x" name="realX" pattern="^[0-9]{1,10}$" autocomplete="off">
                               <label style="display:block" for="real-coord-y">
                                 Реальный<span class="dodgerblue"> Y:</span> 
                               </label>
-                              <input type="text" id="real-coord-y" name="realY" autocomplete="off">
+                              <input type="text" id="real-coord-y" name="realY" pattern="^[0-9]{1,10}$" autocomplete="off">
                             </article>
                           </section>
                           <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
@@ -207,195 +130,204 @@ const popupMenu = {
                           </div>
                         </form>
                       </div>`;
-                    main.insertAdjacentHTML("beforeend", html);
+                main.insertAdjacentHTML("beforeend", html);
 
-                    const popupWindow = main.querySelector(".popup-window");
-                    freeCoord.domBlock = popupWindow;
+                const markPopupWindow = main.querySelector(".popup-window");
+                freeCoord.domBlock = markPopupWindow;
 
-                    const form = popupWindow.querySelector(
-                      ".popup-window__coords-form"
-                    );
+                const form = markPopupWindow.querySelector(
+                  ".popup-window__coords-form"
+                );
 
-                    // Form data processing
-                    form.onsubmit = (e) => {
-                      e.preventDefault();
+                // Обработка кнопки "Сохранить координаты"
+                form.onsubmit = (e) => {
+                  e.preventDefault();
 
-                      const formData = new FormData(form);
-                      const realXInput = form.elements["realX"];
-                      const realYInput = form.elements["realY"];
+                  const formData = new FormData(form);
+                  const realXInput = form.elements["realX"];
+                  const realYInput = form.elements["realY"];
 
-                      freeCoord.isSaved = true;
-                      freeCoord.realX = +formData.get("realX");
-                      freeCoord.realY = +formData.get("realY");
-                      mark.dataset.markStatus = "saved";
-                      map.calcCoords.savedCount++;
+                  freeCoord.isSaved = true;
+                  freeCoord.realX = +formData.get("realX");
+                  freeCoord.realY = +formData.get("realY");
+                  mark.dataset.markStatus = "saved";
+                  map.calcCoords.savedCount++;
 
-                      realXInput.disabled = true;
-                      realYInput.disabled = true;
+                  realXInput.disabled = true;
+                  realYInput.disabled = true;
 
-                      const formMsg = form.querySelector(
-                        ".popup-window__result-msg"
-                      );
-                      formMsg.textContent = "Координаты сохранены";
-                      formMsg.style.color = "green";
-                      formMsg.classList.remove("unvisible");
+                  const formMsg = form.querySelector(
+                    ".popup-window__result-msg"
+                  );
+                  formMsg.textContent = "Координаты сохранены";
+                  formMsg.style.color = "green";
+                  formMsg.classList.remove("unvisible");
 
-                      const saveBtn = form.querySelector(
-                        ".popup-window__save-button"
-                      );
-                      saveBtn.hidden = true;
+                  const saveBtn = form.querySelector(
+                    ".popup-window__save-button"
+                  );
+                  saveBtn.hidden = true;
 
-                      const deleteBtn = form.querySelector(
-                        ".popup-window__delete-coord"
-                      );
-                      deleteBtn.hidden = false;
+                  const deleteBtn = form.querySelector(
+                    ".popup-window__delete-coord"
+                  );
+                  deleteBtn.hidden = false;
 
-                      if (map.calcCoords.savedCount === 4) {
-                        const html = `      
+                  if (map.calcCoords.savedCount === marksCount) {
+                    const html = `      
                         <div class="map__confirm-calc">
                           <button class="map__confirm-calc-bt button button_green-border">
                             Рассчитать реальные координаты
                           </button>
                         </div>`;
-                        main.insertAdjacentHTML("beforeend", html);
-                        const confirmBlock =
-                          main.querySelector(".map__confirm-calc");
-                        const confirmBt = confirmBlock.querySelector(
-                          ".map__confirm-calc-bt"
-                        );
+                    main.insertAdjacentHTML("beforeend", html);
+                    const caclRealCoordsBlock =
+                      main.querySelector(".map__confirm-calc");
+                    const caclRealCoordsBt = caclRealCoordsBlock.querySelector(
+                      ".map__confirm-calc-bt"
+                    );
 
-                        confirmBt.onclick = () => {
-                          const layerDist = Math.sqrt(
-                            (coords[0].layerX - coords[1].layerX) ** 2 +
-                              (coords[0].layerY - coords[1].layerY) ** 2
-                          );
-                          const realDist = Math.sqrt(
-                            (coords[0].realX - coords[1].realX) ** 2 +
-                              (coords[0].realY - coords[1].realY) ** 2
-                          );
+                    // Обработка кнопки "Рассчитать реальные координаты"
+                    caclRealCoordsBt.onclick = () => {
+                      mapBody
+                        .querySelectorAll(".map__body-mark")
+                        .forEach((mark) => {
+                          mark.remove();
+                          mapBody.onclick = null;
+                        });
 
-                          map.mPerPixel = realDist / layerDist;
-                          map.zeroRealCoord.x =
-                            coords[0].realX - map.mPerPixel * coords[0].layerY;
-                          map.zeroRealCoord.y =
-                            coords[0].realY - map.mPerPixel * coords[0].layerX;
+                      const layerDist = Math.sqrt(
+                        (markCoords[0].layerX - markCoords[1].layerX) ** 2 +
+                          (markCoords[0].layerY - markCoords[1].layerY) ** 2
+                      );
+                      const realDist = Math.sqrt(
+                        (markCoords[0].realX - markCoords[1].realX) ** 2 +
+                          (markCoords[0].realY - markCoords[1].realY) ** 2
+                      );
 
-                          map.isCoordsCalculated = true;
+                      map.mPerPixel = realDist / layerDist;
+                      map.zeroRealCoord.x =
+                        markCoords[0].realX -
+                        map.mPerPixel * markCoords[0].layerY;
+                      map.zeroRealCoord.y =
+                        markCoords[0].realY -
+                        map.mPerPixel * markCoords[0].layerX;
 
-                          confirmBlock.style.top = "-80px";
-                          setTimeout(() => confirmBlock.remove(), 800);
+                      map.isCoordsCalculated = true;
 
-                          mapBody.addEventListener("mousemove", (e) => {
-                            const realX = document.querySelector(".realX");
-                            const realY = document.querySelector(".realY");
+                      caclRealCoordsBlock.style.top = "-80px";
+                      setTimeout(() => caclRealCoordsBlock.remove(), 800);
 
-                            realX.innerHTML = `RealX: ${
-                              map.zeroRealCoord.x + e.layerY * map.mPerPixel
-                            }`;
-                            realY.innerHTML = `RealY: ${
-                              map.zeroRealCoord.y + e.layerX * map.mPerPixel
-                            }`;
-                          });
-                        };
-                        setTimeout(() => (confirmBlock.style.top = "0px"), 100);
-                      }
+                      mapBody.addEventListener("mousemove", (e) => {
+                        const realX = document.querySelector(".realX");
+                        const realY = document.querySelector(".realY");
 
-                      deleteBtn.onclick = () => {
-                        if (map.calcCoords.savedCount === 4) {
-                          main.querySelector(".map__confirm-calc").remove();
-                        }
-                        realXInput.disabled = false;
-                        realYInput.disabled = false;
-                        formMsg.classList.add("unvisible");
-                        deleteBtn.hidden = true;
-                        saveBtn.hidden = false;
-                        freeCoord.isSaved = false;
-                        map.calcCoords.savedCount--;
-                        delete mark.dataset.markStatus;
-                      };
+                        realX.innerHTML = `RealX: ${
+                          map.zeroRealCoord.x + e.layerY * map.mPerPixel
+                        }`;
+                        realY.innerHTML = `RealY: ${
+                          map.zeroRealCoord.y + e.layerX * map.mPerPixel
+                        }`;
+                      });
+
+                      button.disabled = false;
                     };
 
-                    // Calculates the position of the popup-window
-                    if (x < popupWindow.offsetWidth / 2) {
-                      popupWindow.style.left = "0px";
-                    } else if (
-                      main.offsetWidth - x <
-                      popupWindow.offsetWidth / 2
-                    ) {
-                      popupWindow.style.right = "0px";
-                    } else {
-                      popupWindow.style.left = `${
-                        x + 8 - popupWindow.offsetWidth / 2
-                      }px`;
-                    }
+                    setTimeout(
+                      () => (caclRealCoordsBlock.style.top = "0px"),
+                      100
+                    );
+                  }
 
-                    if (y < popupWindow.offsetHeight) {
-                      popupWindow.style.top = `${y + 16}px`;
-                    } else {
-                      popupWindow.style.top = `${
-                        y - popupWindow.offsetHeight
-                      }px`;
+                  // Обработка кнопки "Удалить координаты"
+                  deleteBtn.onclick = () => {
+                    if (map.calcCoords.savedCount === marksCount) {
+                      main.querySelector(".map__confirm-calc").remove();
                     }
+                    realXInput.disabled = false;
+                    realYInput.disabled = false;
+                    formMsg.classList.add("unvisible");
+                    deleteBtn.hidden = true;
+                    saveBtn.hidden = false;
+                    freeCoord.isSaved = false;
+                    map.calcCoords.savedCount--;
+                    delete mark.dataset.markStatus;
+                  };
+                };
+
+                // Рассчитывает позицию всплывающего окна, при наведении на отметку на карте
+                if (x < markPopupWindow.offsetWidth / 2) {
+                  markPopupWindow.style.left = "0px";
+                } else if (
+                  main.offsetWidth - x <
+                  markPopupWindow.offsetWidth / 2
+                ) {
+                  markPopupWindow.style.right = "0px";
+                } else {
+                  markPopupWindow.style.left = `${
+                    x + 8 - markPopupWindow.offsetWidth / 2
+                  }px`;
+                }
+
+                if (y < markPopupWindow.offsetHeight) {
+                  markPopupWindow.style.top = `${y + 16}px`;
+                } else {
+                  markPopupWindow.style.top = `${
+                    y - markPopupWindow.offsetHeight
+                  }px`;
+                }
+              }
+            };
+
+            // Срабатывает, когда "Кликаем" по отметке на карте
+            mark.onclick = () => {
+              if (mark.dataset.markStatus !== "saved") {
+                const markCoord = markCoords.find((i) => i.mark === mark);
+                markCoord.domBlock = null;
+                markCoord.mark = null;
+                const markPopupWindow = main.querySelector(".popup-window");
+                if (markPopupWindow) {
+                  markPopupWindow.remove();
+                }
+                mark.remove();
+                map.calcCoords.markCount--;
+              }
+            };
+
+            // Срабатывает, когда курсор мыши покидает отметку на карте
+            mark.onmouseleave = (e) => {
+              const markPopupWindow = main.querySelector(".popup-window");
+
+              if (e.relatedTarget !== markPopupWindow) {
+                markPopupWindow.remove();
+              }
+
+              if (!markPopupWindow.onmouseleave) {
+                markPopupWindow.onmouseleave = (e) => {
+                  if (e.relatedTarget !== mark) {
+                    markPopupWindow.remove();
                   }
                 };
               }
-
-              if (!mark.onclick) {
-                mark.onclick = (e) => {
-                  if (mark.dataset.markStatus !== "saved") {
-                    if (map.calcCoords.markCount === 4) {
-                      mapBody.querySelector(".map__body-mark-dist").remove();
-                    }
-                    const coord = coords.find((i) => i.mark === mark);
-                    coord.domBlock = null;
-                    coord.mark = null;
-                    const popupWindow = main.querySelector(".popup-window");
-                    if (popupWindow) {
-                      popupWindow.remove();
-                    }
-                    e.target.remove();
-                    map.calcCoords.markCount--;
-                  }
-                };
-              }
-
-              if (!mark.onmouseleave) {
-                mark.onmouseleave = (e) => {
-                  const popupWindow = main.querySelector(".popup-window");
-
-                  if (e.relatedTarget !== popupWindow) {
-                    popupWindow.remove();
-                  }
-
-                  if (!popupWindow.onmouseleave) {
-                    popupWindow.onmouseleave = (e) => {
-                      if (e.relatedTarget !== mark) {
-                        popupWindow.remove();
-                      }
-                    };
-                  }
-                };
-              }
-            }
-          };
-        }
+            };
+          }
+        };
       },
-      block: null,
     },
+    // Пункт меню ""
     {
       name: "2",
       event: "click",
       func() {
         alert("2");
       },
-      block: null,
     },
   ],
 };
 
-// Adding "mousedown" event on every "Menu button"
+// Для каждого пункта меню добавляем функцию обработки нажатия правой кнопки мыши по пункту меню
 menuItems.forEach((item, ind) => {
-  item.addEventListener("mousedown", (e) => {
+  item.addEventListener("click", (e) => {
     if (e.target === popupMenu.options.activeItem) {
       hidePopupMenu();
       return;
@@ -405,7 +337,7 @@ menuItems.forEach((item, ind) => {
   });
 });
 
-// Adding "mouseenter" event on every "Menu button"
+// Для каждого пункта меню добавляем функцию обработки наведения на пункт меню
 menuItems.forEach((item, ind) => {
   item.addEventListener("mouseenter", (e) => {
     if (popupMenu.options.activeItem) {
@@ -417,7 +349,7 @@ menuItems.forEach((item, ind) => {
   });
 });
 
-// Adding "click" event on document
+// Срабатывает при "Клике" по документу
 document.addEventListener("click", (e) => {
   if (
     popupMenu.options.activeItem &&
@@ -427,15 +359,16 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Функция показа всплывающего меню
 function showPopupMenu(target, ind) {
   switch (ind) {
-    // File button
+    // Пункт меню "Файл"
     case 0:
-      popupMenu.options.activeBlock = popupMenu.file.block;
+      popupMenu.options.activeBlock = popupMenu.file.htmlBlock;
       break;
-    // Functions button
+    // Пункт меню "Функции"
     case 1:
-      popupMenu.options.activeBlock = popupMenu.functions.block;
+      popupMenu.options.activeBlock = popupMenu.functions.htmlBlock;
       break;
   }
 
@@ -445,6 +378,7 @@ function showPopupMenu(target, ind) {
   menuBlock.append(popupMenu.options.activeBlock);
 }
 
+// Фуцнкция скрытия всплывающего меню
 function hidePopupMenu() {
   popupMenu.options.activeItem.classList.remove("menu__item_active");
   popupMenu.options.activeItem = null;
@@ -452,6 +386,7 @@ function hidePopupMenu() {
   popupMenu.options.activeBlock = null;
 }
 
+// Функция создания меню
 (function createPopupMenu() {
   for (let prop in popupMenu) {
     if (Array.isArray(popupMenu[prop])) {
@@ -466,7 +401,7 @@ function hidePopupMenu() {
         popupBlock.append(button);
       });
 
-      popupMenu[prop].block = popupBlock;
+      popupMenu[prop].htmlBlock = popupBlock;
     }
   }
 })();
