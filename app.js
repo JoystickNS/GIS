@@ -2,15 +2,16 @@ const xmlns = "http://www.w3.org/2000/svg";
 const menuBlock = document.querySelector(".menu");
 const menuItems = menuBlock.querySelectorAll(".menu__item"); // Menu buttons
 const main = document.querySelector("main");
+const mapWrapper = main.querySelector(".map__wrapper");
 const mapBody = main.querySelector(".map__body");
 const mapImage = main.querySelector(".map__image");
 const options = document.querySelector(".options");
 const sidebar = document.querySelector(".sidebar");
 
 const map = {
-  zoom: 100,
   step: 10,
-  mPerPixel: 0,
+  mPerPixel: null,
+  isFree: true,
   calcCoords: {
     markCount: 0,
     savedCount: 0,
@@ -19,38 +20,20 @@ const map = {
         isSaved: false,
         mark: null,
         domBlock: null,
-        layerX: 0,
-        layerY: 0,
-        realX: 7055092.487,
-        realY: 9631255.866,
+        layerX: 10,
+        layerY: 10,
+        realX: 10,
+        realY: 10,
       },
       {
         isSaved: false,
         mark: null,
         domBlock: null,
-        layerX: 0,
-        layerY: 0,
-        realX: 7055292.015,
-        realY: 9631879.309,
+        layerX: 20,
+        layerY: 20,
+        realX: 20,
+        realY: 20,
       },
-      // {
-      //   isSaved: false,
-      //   mark: null,
-      //   domBlock: null,
-      //   layerX: 0,
-      //   layerY: 0,
-      //   realX: 7054867.39,
-      //   realY: 9631790.191,
-      // },
-      // {
-      //   isSaved: false,
-      //   mark: null,
-      //   domBlock: null,
-      //   layerX: 0,
-      //   layerY: 0,
-      //   realX: 7054829.411,
-      //   realY: 9631143.515,
-      // },
     ],
   },
   zeroRealCoord: {
@@ -73,11 +56,11 @@ mapBody.addEventListener("mousewheel", (e) => {
 });
 
 mapBody.onmouseenter = () => {
-  mapBody.querySelector(".map__body-grid-attach").style.visibility = "visible";
+  //mapBody.querySelector(".map__body-grid-attach").style.visibility = "visible";
 };
 
 mapBody.onmouseleave = () => {
-  mapBody.querySelector(".map__body-grid-attach").style.visibility = "hidden";
+  //mapBody.querySelector(".map__body-grid-attach").style.visibility = "hidden";
 };
 
 mapBody.onmousemove = (e) => {
@@ -95,16 +78,16 @@ mapBody.onmousemove = (e) => {
     map.layerY = e.layerY;
   }
 
-  const point = mapBody.querySelector(".map__body-grid-attach");
+  // const point = mapBody.querySelector(".map__body-grid-attach");
 
-  point.setAttribute("cx", map.layerX);
-  point.setAttribute("cy", map.layerY);
+  // point.setAttribute("cx", map.layerX);
+  // point.setAttribute("cy", map.layerY);
 
-  const xc = document.querySelector(".xc");
-  const yc = document.querySelector(".yc");
+  // const xc = document.querySelector(".xc");
+  // const yc = document.querySelector(".yc");
 
-  xc.innerHTML = `Xc: ${map.layerX}`;
-  yc.innerHTML = `Yc: ${map.layerY}`;
+  // xc.innerHTML = `Xc: ${map.layerX}`;
+  // yc.innerHTML = `Yc: ${map.layerY}`;
 };
 
 const optionsGrid = options.querySelector("#options__item-grid");
@@ -130,4 +113,63 @@ const optionsGridAttach = options.querySelector("#options__item-grid-attach");
 
 optionsGridAttach.onchange = (e) => {
   map.isGridAttach = e.target.checked;
+};
+
+// Срабатывает после загрузки картинки карты
+main.afterImageLoaded = () => {
+  mapWrapper.addEventListener("mousemove", (e) => {
+    if (e.buttons & 1) {
+      map.isFree = false;
+      main.scrollLeft -= e.movementX;
+      main.scrollTop -= e.movementY;
+      mapWrapper.style.cursor = "grab";
+    }
+  });
+
+  mapWrapper.addEventListener("mouseup", (e) => {
+    if (~e.buttons & 1) {
+      mapWrapper.style.cursor = "default";
+      map.isFree = true;
+    }
+  });
+
+  let scale = 1;
+  let timeoutId = null;
+
+  // Обработка прокрутки колёсика мыши над картой
+  mapWrapper.addEventListener("wheel", (e) => {
+    e.preventDefault();
+
+    if (e.deltaY < 0) {
+      // Уменьшение масштаба
+      scale *= 1.1;
+    } else if (e.deltaY > 0) {
+      // Увеличение масштаба
+      scale /= 1.1;
+    }
+
+    mapWrapper.style.transformOrigin = `${e.layerX}px ${e.layerY}px 0px`;
+    mapWrapper.style.transform = `scale(${scale})`;
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      newClientWidth = mapWrapper.clientWidth * scale;
+      newClientHeight = mapWrapper.clientHeight * scale;
+      mapImage.style.width = `${newClientWidth}px`;
+      mapImage.style.height = `${newClientHeight}px`;
+      mapWrapper.style.width = `${newClientWidth}px`;
+      mapWrapper.style.height = `${newClientHeight}px`;
+      mapWrapper.style.transformOrigin = "";
+      mapWrapper.style.transform = "";
+      map.mPerPixel *= scale;
+      scale = 1;
+    }, 500);
+  });
+
+  main.addEventListener("wheel", (e) => {
+    console.log(e.layerX - main.scrollLeft);
+  });
 };

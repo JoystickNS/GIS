@@ -94,10 +94,15 @@ body {
   position: absolute;
   top: 61px;
   left: 301px;
-  bottom: 0px;
   right: 0px;
+  bottom: 0px;
   background-color: #f8f9fa;
   overflow: hidden;
+  z-index: -1;
+}
+
+.map__wrapper {
+  position: absolute;
 }
 
 .map__image {
@@ -111,7 +116,7 @@ body {
 }
 
 .map__confirm-calc {
-  position: absolute;
+  position: fixed;
   display: flex;
   align-items: center;
   justify-content: center;

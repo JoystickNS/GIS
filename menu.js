@@ -1,6 +1,3 @@
-// const mainMenu = new MainMenu();
-// let menuItem = new MenuItem();
-
 const popupMenu = {
   options: {
     activeItem: null,
@@ -25,10 +22,17 @@ const popupMenu = {
               const img = new Image();
               img.src = imageUrl;
               img.onload = function () {
+                mapWrapper.style.width = `${this.width}px`;
+                mapWrapper.style.height = `${this.height}px`;
+                main.scrollLeft = (this.width - main.clientWidth) / 2;
+                main.scrollTop = (this.height - main.clientHeight) / 2;
                 mapImage.width = this.width;
                 mapImage.height = this.height;
+                map.width = this.width;
+                map.height = this.height;
                 ctx.drawImage(img, 0, 0);
                 URL.revokeObjectURL(imageUrl);
+                main.afterImageLoaded();
               };
             } else {
               alert("Вы выбрали не картинку");
@@ -62,7 +66,13 @@ const popupMenu = {
         button.disabled = true;
 
         // Срабатывает в момент отжатия "Клика" мышки
-        mapBody.onclick = (e) => {
+        mapBody.onmouseup = (e) => {
+          // Если пользователь выполняет какое-то другое действие на карте
+          // или отжата не правая кнопка мыши то выходим
+          if (e.button !== 0 || !map.isFree) {
+            return;
+          }
+
           const marksCount = 2; // Максимальное количество меток
 
           // Если не было установлено marksCount отметок на карте
@@ -77,16 +87,25 @@ const popupMenu = {
             mark.classList.add("map__body-mark");
             mark.setAttribute("href", "point.svg");
             mark.setAttribute("x", map.layerX - 8);
-            mark.setAttribute("y", map.layerY - 16);
+            mark.setAttribute("y", map.layerY - 15);
+            mark.addEventListener("dragstart", (e) => {
+              e.preventDefault();
+            });
             mapBody.append(mark);
             map.calcCoords.markCount++;
 
             freeCoord.mark = mark;
-            freeCoord.layerX = map.layerX;
-            freeCoord.layerY = map.layerY;
+            // freeCoord.layerX = map.layerX;
+            // freeCoord.layerY = map.layerY;
 
             // Срабатывает при наведении на отметку на карте
             mark.onmouseenter = (e) => {
+              if (!map.isFree) {
+                return;
+              }
+
+              const markX = +mark.getAttribute("x");
+              const markY = +mark.getAttribute("y");
               // Если наведение на отметку было сделано не с всплывающего окна
               if (e.relatedTarget !== main.querySelector(".popup-window")) {
                 const savedMark = markCoords.find((coord) => {
@@ -95,21 +114,27 @@ const popupMenu = {
                 // Если отметка была ранее сохранена, то просто отображаем её всплывающее окно и выходим
                 if (savedMark) {
                   main.append(savedMark.domBlock);
+                  calcPopupWindowPosition(
+                    main,
+                    savedMark.domBlock,
+                    markX,
+                    markY,
+                    8,
+                    16
+                  );
                   return;
                 }
 
-                const x = +mark.getAttribute("x");
-                const y = +mark.getAttribute("y");
                 const html = `
                       <div class="popup-window">
                         <form class="popup-window__coords-form" method="POST">
                           <section class="popup-window__coords">
                             <article class="popup-window__coords-layer">
                               <p>Экранный X: <span class="dodgerblue">${
-                                x + 8
+                                markX + 8
                               }</span></p>
                               <p>Экранный Y: <span class="dodgerblue">${
-                                y + 16
+                                markY + 16
                               }</span></p>
                             </article>
                             <article class="popup-window__coords-real">
@@ -148,8 +173,8 @@ const popupMenu = {
                   const realYInput = form.elements["realY"];
 
                   freeCoord.isSaved = true;
-                  freeCoord.realX = +formData.get("realX");
-                  freeCoord.realY = +formData.get("realY");
+                  // freeCoord.realX = +formData.get("realX");
+                  // freeCoord.realY = +formData.get("realY");
                   mark.dataset.markStatus = "saved";
                   map.calcCoords.savedCount++;
 
@@ -234,7 +259,7 @@ const popupMenu = {
                     };
 
                     setTimeout(
-                      () => (caclRealCoordsBlock.style.top = "0px"),
+                      () => (caclRealCoordsBlock.style.top = "60px"),
                       100
                     );
                   }
@@ -256,31 +281,23 @@ const popupMenu = {
                 };
 
                 // Рассчитывает позицию всплывающего окна, при наведении на отметку на карте
-                if (x < markPopupWindow.offsetWidth / 2) {
-                  markPopupWindow.style.left = "0px";
-                } else if (
-                  main.offsetWidth - x <
-                  markPopupWindow.offsetWidth / 2
-                ) {
-                  markPopupWindow.style.right = "0px";
-                } else {
-                  markPopupWindow.style.left = `${
-                    x + 8 - markPopupWindow.offsetWidth / 2
-                  }px`;
-                }
-
-                if (y < markPopupWindow.offsetHeight) {
-                  markPopupWindow.style.top = `${y + 16}px`;
-                } else {
-                  markPopupWindow.style.top = `${
-                    y - markPopupWindow.offsetHeight
-                  }px`;
-                }
+                calcPopupWindowPosition(
+                  main,
+                  markPopupWindow,
+                  markX,
+                  markY,
+                  8,
+                  16
+                );
               }
             };
 
             // Срабатывает, когда "Кликаем" по отметке на карте
-            mark.onclick = () => {
+            mark.onmouseup = () => {
+              if (!map.isFree) {
+                return;
+              }
+
               if (mark.dataset.markStatus !== "saved") {
                 const markCoord = markCoords.find((i) => i.mark === mark);
                 markCoord.domBlock = null;
@@ -298,7 +315,11 @@ const popupMenu = {
             mark.onmouseleave = (e) => {
               const markPopupWindow = main.querySelector(".popup-window");
 
-              if (e.relatedTarget !== markPopupWindow) {
+              if (!markPopupWindow) {
+                return;
+              }
+
+              if (e.relatedTarget !== markPopupWindow || !map.isFree) {
                 markPopupWindow.remove();
               }
 
@@ -405,3 +426,39 @@ function hidePopupMenu() {
     }
   }
 })();
+
+/**
+ * Функция высчитывает позицию всплывающего окна
+ *
+ * @param {HTMLElement} window - Окно, в области которого необходимо разместить всплывающее окно
+ * @param {Element} markPopupWindow - всплывающее окно
+ * @param {Number} x - Координата X, относительно которой необходимо вычислить позицию
+ * @param {Number} y - Координата Y, относительно которой необходимо вычислить позицию
+ * @param {Number} offsetX - Смещение, относительно координаты X
+ * @param {Number} offsetY - Смещение, относительно координаты Y
+ */
+function calcPopupWindowPosition(
+  window,
+  popupWindow,
+  x,
+  y,
+  offsetX = 0,
+  offsetY = 0
+) {
+  const divX = window.scrollLeft;
+  const divY = window.scrollTop;
+
+  if (x - divX < popupWindow.offsetWidth / 2) {
+    popupWindow.style.left = `${divX}px`;
+  } else if (window.offsetWidth - x + divX < popupWindow.offsetWidth / 2) {
+    popupWindow.style.right = `${-divX}px`;
+  } else {
+    popupWindow.style.left = `${x + offsetX - popupWindow.offsetWidth / 2}px`;
+  }
+
+  if (y - divY < popupWindow.offsetHeight) {
+    popupWindow.style.top = `${y + offsetY}px`;
+  } else {
+    popupWindow.style.top = `${y - popupWindow.offsetHeight}px`;
+  }
+}
