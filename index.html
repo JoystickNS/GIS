@@ -39,48 +39,50 @@
       <p class="yc">Yc</p>
       <p class="realX">RealX: none</p>
       <p class="realY">RealY: none</p>
+      <button class="a">a</button>
+      <button class="b">b</button>
     </section>
 
     <main class="map">
-      <div class="map__wrapper">
-        <canvas class="map__image"></canvas>
-        <svg class="map__body">
-          <defs>
-            <pattern
-              id="p10"
-              width="10"
-              height="10"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 10 0 L 0 0 0 10"
-                fill="none"
-                stroke="gray"
-                stroke-width="0.5"
-              />
-            </pattern>
-            <pattern
-              id="map__body-grid"
-              width="100"
-              height="100"
-              patternUnits="userSpaceOnUse"
-            >
-              <rect width="100" height="100" fill="url(#p10)" />
-              <path
-                d="M 100 0 L 0 0 0 100"
-                fill="none"
-                stroke="gray"
-                stroke-width="1"
-              />
-            </pattern>
-          </defs>
-          <g class="map__body-grid">
-            <circle class="map__body-grid-attach" r="1" style="visibility: hidden;"></circle>
-            <rect width="100%" height="100%" fill="url(#map__body-grid)" style="visibility: hidden;"></rect>
-          </g>
-          <line x1="0" y1="0" x2="200" y2="200" stroke-width="1" stroke="rgb(0,0,0)"/> 
-        </svg>
-      </div>
+      <canvas class="map__image"></canvas>
+      <svg class="map__body">
+        <defs>
+          <pattern
+            id="p10"
+            width="10"
+            height="10"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 10 0 L 0 0 0 10"
+              fill="none"
+              stroke="gray"
+              stroke-width="0.5"
+            />
+          </pattern>
+          <pattern
+            id="map__body-grid"
+            width="100"
+            height="100"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect width="100" height="100" fill="url(#p10)" />
+            <path
+              d="M 100 0 L 0 0 0 100"
+              fill="none"
+              stroke="gray"
+              stroke-width="1"
+            />
+          </pattern>
+        </defs>
+        <g class="map__body-grid">
+          <circle class="map__body-grid-attach" r="1" style="visibility: hidden;"></circle>
+          <rect width="100%" height="100%" fill="url(#map__body-grid)" style="visibility: hidden;"></rect>
+        </g>
+        <g class="map__body-elements">
+          <polyline points="3584,1904 3684,1904"  stroke-width="1" stroke="rgb(0,0,0)" fill="none"/>
+        </g>
+      </svg>
     </main>
     <div hidden>
       <input type="file" />

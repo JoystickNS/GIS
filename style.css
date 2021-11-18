@@ -101,18 +101,12 @@ body {
   z-index: -1;
 }
 
-.map__wrapper {
-  position: absolute;
-}
-
 .map__image {
   position: absolute;
 }
 
 .map__body {
   position: absolute;
-  width: 100%;
-  height: 100%;
 }
 
 .map__confirm-calc {

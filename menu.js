@@ -22,14 +22,22 @@ const popupMenu = {
               const img = new Image();
               img.src = imageUrl;
               img.onload = function () {
-                mapWrapper.style.width = `${this.width}px`;
-                mapWrapper.style.height = `${this.height}px`;
-                main.scrollLeft = (this.width - main.clientWidth) / 2;
-                main.scrollTop = (this.height - main.clientHeight) / 2;
+                let mapWidth =
+                  this.width > screen.width ? this.width : screen.width;
+                let mapHeight =
+                  this.height > screen.height ? this.height : screen.height;
+
+                mapWidth *= 4;
+                mapHeight *= 4;
+                mapBody.style.width = `${mapWidth}px`;
+                mapBody.style.height = `${mapHeight}px`;
+                main.scrollLeft = main.scrollLeftMax / 2;
+                main.scrollTop = main.scrollTopMax / 2;
                 mapImage.width = this.width;
                 mapImage.height = this.height;
-                map.width = this.width;
-                map.height = this.height;
+                mapImage.style = "";
+                mapImage.style.left = `${mapWidth / 2 - mapImage.width / 2}px`;
+                mapImage.style.top = `${mapHeight / 2 - mapImage.height / 2}px`;
                 ctx.drawImage(img, 0, 0);
                 URL.revokeObjectURL(imageUrl);
                 main.afterImageLoaded();
@@ -431,7 +439,7 @@ function hidePopupMenu() {
  * Функция высчитывает позицию всплывающего окна
  *
  * @param {HTMLElement} window - Окно, в области которого необходимо разместить всплывающее окно
- * @param {Element} markPopupWindow - всплывающее окно
+ * @param {Element} popupWindow - всплывающее окно
  * @param {Number} x - Координата X, относительно которой необходимо вычислить позицию
  * @param {Number} y - Координата Y, относительно которой необходимо вычислить позицию
  * @param {Number} offsetX - Смещение, относительно координаты X
