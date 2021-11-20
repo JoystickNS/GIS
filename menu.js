@@ -31,8 +31,8 @@ const popupMenu = {
                 mapHeight *= 4;
                 mapBody.style.width = `${mapWidth}px`;
                 mapBody.style.height = `${mapHeight}px`;
-                main.scrollLeft = main.scrollLeftMax / 2;
-                main.scrollTop = main.scrollTopMax / 2;
+                main.scrollLeft = (main.scrollWidth - main.clientWidth) / 2;
+                main.scrollTop = (main.scrollHeight - main.clientHeight) / 2;
                 mapImage.width = this.width;
                 mapImage.height = this.height;
                 mapImage.style = "";
@@ -264,6 +264,9 @@ const popupMenu = {
                       });
 
                       button.disabled = false;
+                      // FIXME:
+                      // map.calcCoords.markCount = 0;
+                      // map.calcCoords.savedCount = 0;
                     };
 
                     setTimeout(
@@ -436,7 +439,8 @@ function hidePopupMenu() {
 })();
 
 /**
- * Функция высчитывает позицию всплывающего окна
+ * Высчитывает позицию всплывающего окна, чтобы оно отобразилось
+ * в области видимости родительского окна
  *
  * @param {HTMLElement} window - Окно, в области которого необходимо разместить всплывающее окно
  * @param {Element} popupWindow - всплывающее окно

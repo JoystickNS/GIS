@@ -132,14 +132,6 @@ main.afterImageLoaded = () => {
     }
   });
 
-  function calculateZoom(value) {
-    return (value * 6) / 5;
-  }
-
-  function calculateUnZoom(value) {
-    return (value * 5) / 6;
-  }
-
   let scale = 1;
   let timeoutId = null;
   let newMapImageWidth = mapImage.width;
@@ -155,14 +147,16 @@ main.afterImageLoaded = () => {
 
     if (e.deltaY < 0) {
       // Уменьшение масштаба
+      if (
+        calculateZoom(newMapBodyWidth) > Number.MAX_SAFE_INTEGER ||
+        calculateZoom(newMapBodyHeight) > Number.MAX_SAFE_INTEGER
+      ) {
+        return;
+      }
+
       scale *= 1.2;
-      newMapImageWidth = calculateZoom(newMapImageWidth);
-      newMapImageHeight = calculateZoom(newMapImageHeight);
       newMapBodyWidth = calculateZoom(newMapBodyWidth);
       newMapBodyHeight = calculateZoom(newMapBodyHeight);
-      newMapImageLeft = calculateZoom(newMapImageLeft);
-      newMapImageTop = calculateZoom(newMapImageTop);
-      map.mPerPixel = calculateUnZoom(map.mPerPixel);
     } else if (e.deltaY > 0) {
       // Увеличение масштаба
       if (
@@ -171,14 +165,10 @@ main.afterImageLoaded = () => {
       ) {
         return;
       }
+
       scale /= 1.2;
-      newMapImageWidth = calculateUnZoom(newMapImageWidth);
-      newMapImageHeight = calculateUnZoom(newMapImageHeight);
       newMapBodyWidth = calculateUnZoom(newMapBodyWidth);
       newMapBodyHeight = calculateUnZoom(newMapBodyHeight);
-      newMapImageLeft = calculateUnZoom(newMapImageLeft);
-      newMapImageTop = calculateUnZoom(newMapImageTop);
-      map.mPerPixel = calculateZoom(map.mPerPixel);
     }
 
     mapImage.style.transform = `scale(${scale})`;
@@ -199,9 +189,39 @@ main.afterImageLoaded = () => {
         return;
       }
 
+      let calculateZoomFunc;
+      let scaleCount = 0;
+      if (scale > 1) {
+        calculateZoomFunc = calculateZoom;
+
+        while (scale > 1) {
+          scale /= 1.2;
+          scaleCount++;
+        }
+
+        map.mPerPixel = calculateUnZoom(map.mPerPixel, scaleCount);
+      } else if (scale < 1) {
+        calculateZoomFunc = calculateUnZoom;
+
+        while (scale < 1) {
+          scale *= 1.2;
+          scaleCount++;
+        }
+
+        map.mPerPixel = calculateZoom(map.mPerPixel, scaleCount);
+      }
+
+      // Расчёт новых значений
+      newMapImageWidth = calculateZoomFunc(newMapImageWidth, scaleCount);
+      newMapImageHeight = calculateZoomFunc(newMapImageHeight, scaleCount);
+      newMapImageLeft = calculateZoomFunc(newMapImageLeft, scaleCount);
+      newMapImageTop = calculateZoomFunc(newMapImageTop, scaleCount);
+      // Конец расчёта новых значений
+
       const oldMapImageLeft = parseFloat(mapImage.style.left);
       const oldMapImageTop = parseFloat(mapImage.style.top);
 
+      // Присвоение новых значений
       mapImage.style.transform = "";
       mapImage.style.transformOrigin = "";
       mapImage.style.width = `${newMapImageWidth}px`;
@@ -213,43 +233,45 @@ main.afterImageLoaded = () => {
       mapBody.style.transformOrigin = "";
       mapBody.style.width = `${newMapBodyWidth}px`;
       mapBody.style.height = `${newMapBodyHeight}px`;
+      // Конец присвоения новых значений
 
       // Смешение страницы, относительно того куда приблизили
       const divX = e.clientX - main.offsetLeft;
       const divY = e.clientY - main.offsetTop;
-      let x = e.layerX;
-      let y = e.layerY;
-      while (scale > 1) {
-        x = calculateZoom(x);
-        y = calculateZoom(y);
-        scale /= 1.2;
-      }
+      const offsetLeft = newMapImageLeft - oldMapImageLeft;
+      const offsetTop = newMapImageTop - oldMapImageTop;
 
-      while (scale < 1) {
-        x = calculateUnZoom(x);
-        y = calculateUnZoom(y);
-        scale *= 1.2;
-      }
-      main.scrollTo(x - divX, y - divY);
-
-      let a = document.querySelector("polyline");
-      a.setAttribute(
-        "points",
-        a
-          .getAttribute("points")
-          .split(" ")
-          .map((point) => {
-            return point
-              .split(",")
-              .map((value, i) =>
-                i % 2 === 0
-                  ? (+value + newMapImageLeft - oldMapImageLeft).toFixed(2)
-                  : (+value + newMapImageTop - oldMapImageTop).toFixed(2)
-              )
-              .join(",");
-          })
-          .join(" ")
+      main.scrollTo(
+        calculateZoomFunc(e.layerX, scaleCount) - divX,
+        calculateZoomFunc(e.layerY, scaleCount) - divY
       );
+      // Конец смещения
+
+      // Масштабирование элементов карты
+      const mapElements = mapBody.querySelector(".map__body-elements").children;
+      for (let i = 0; i < mapElements.length; i++) {
+        if (
+          mapElements[i].tagName == "polyline" ||
+          mapElements[i].tagName == "polygon"
+        ) {
+          calculateSVGSize(
+            mapElements[i],
+            calculateZoomFunc,
+            scaleCount,
+            offsetLeft,
+            offsetTop
+          );
+        }
+      }
+      // Конец масштабирования элементов карты
+
+      // Смещение марок карты
+      const marks = mapBody.querySelectorAll(".map__body-mark");
+      marks.forEach((mark) => {
+        mark.setAttribute("x", +mark.getAttribute("x") + offsetLeft);
+        mark.setAttribute("y", +mark.getAttribute("y") + offsetTop);
+      });
+      // Конец смещения марок карты
 
       scale = 1;
     }, 300);
@@ -260,24 +282,16 @@ let a = document.querySelector(".a");
 let b = document.querySelector(".b");
 
 a.onclick = (e) => {
-  resizeMapElemenst();
+  calculateSVGSize(c, calculateZoom);
 };
 
 b.onclick = (e) => {
-  console.log(e);
+  calculateSVGSize(c, calculateUnZoom);
 };
 
 main.onmousedown = (e) => {
   e.preventDefault();
   if (e.buttons & 1) {
-    //   const divX = e.clientX - main.offsetLeft;
-    //   const divY = e.clientY - main.offsetTop;
-    //   // const middleX = main.clientWidth / 2;
-    //   // const middleY = main.clientHeight / 2;
-    //   console.log(e.layerX - divX);
-    //   console.log(e.layerY - divY);
-    // } else if (e.buttons & 2) {
-    //b.onclick(e);
   }
 };
 
@@ -288,33 +302,23 @@ main.addEventListener("click", (e) => {
   console.log(divY);
 });
 
-function resizeMapElemenst() {
-  const a = mapBody.querySelector(".map__body-elements").children;
-  for (let i = 0; i < a.length; i++) {
-    // Строка вида => "5,5 10,10"
-    a[i].setAttribute(
-      "points",
-      a[i]
-        .getAttribute("points")
-        .split(" ")
-        .map((point) => {
-          return point
-            .split(",")
-            .map((value, i) =>
-              i % 2 === 0
-                ? +value + (main.scrollWidth - main.clientWidth) / 2
-                : +value + (main.scrollHeight - main.clientHeight) / 2
-            )
-            .join(",");
-        })
-        .join(" ")
-    );
-  }
-}
-
 let c = document.querySelector("polyline");
 
-function getSVGPoints(element) {
+function calculateZoom(value, pow = 1) {
+  return (value * Math.pow(6, pow)) / Math.pow(5, pow);
+}
+
+function calculateUnZoom(value, pow = 1) {
+  return (value * Math.pow(5, pow)) / Math.pow(6, pow);
+}
+
+/**
+ * Поулчает значение атрибута "points" SVG элемента
+ *
+ * @param {SVGImageElement} element - SVG элемент, размеры которого будут вычислены
+ * @returns {Array} Массив координат SVG элемента
+ */
+function getArraySVGPoints(element) {
   return element
     .getAttribute("points")
     .split(" ")
@@ -326,10 +330,56 @@ function getSVGPoints(element) {
     });
 }
 
-function calculateSVGPosition(element) {
-  let points = getSVGPoints(element);
+/**
+ * Вычисляет новые размеры SVG элемента у которого есть атрибут "points" и добавляет смещение,
+ * если необходимо, исходя из того увеличил или уменьшил пользователь масштаб карты
+ *
+ * @param {SVGImageElement} element - SVG элемент, размеры которого будут вычислены
+ * @param {Function} calculateSizeFunc - функция, которая вычисляет, на сколько будут
+ * увеличены или уменьшены размеры SVG элемента
+ * @param {Number} pow - аргумент для функции calculateSizeFunc
+ * @param {Number} offsetX - Смещение относительно X
+ * @param {Number} offsetY - Смещение относительно Y
+ */
+function calculateSVGSize(
+  element,
+  calculateSizeFunc,
+  pow = 1,
+  offsetX = 0,
+  offsetY = 0
+) {
+  const points = getArraySVGPoints(element);
 
-  for (let i = 1; i < points.length; i++) {}
+  let firstPoint = points[0].split(",");
+  let secondPoint;
+  let newDiffX = 0;
+  let newDiffY = 0;
+  let summDiffX = 0;
+  let summDiffY = 0;
+
+  for (let i = 1; i < points.length; i++) {
+    secondPoint = points[i].split(",");
+    secondPoint[0] = +secondPoint[0];
+    secondPoint[1] = +secondPoint[1];
+    const lenX = secondPoint[0] - firstPoint[0];
+    const lenY = secondPoint[1] - firstPoint[1];
+    summDiffX += newDiffX;
+    summDiffY += newDiffY;
+    newDiffX = calculateSizeFunc(lenX, pow) - lenX;
+    newDiffY = calculateSizeFunc(lenY, pow) - lenY;
+    firstPoint = Array.from(secondPoint);
+    points[i] = `${+(secondPoint[0] + summDiffX + newDiffX + offsetX).toFixed(
+      2
+    )},${+(secondPoint[1] + summDiffY + newDiffY + offsetY).toFixed(2)}`;
+  }
+  firstPoint = points[0].split(",");
+  points[0] = `${+(+firstPoint[0] + offsetX).toFixed(2)},${+(
+    +firstPoint[1] + offsetY
+  ).toFixed(2)}`;
+  const strokeWidth = element.getAttribute("stroke-width");
+  element.setAttribute(
+    "stroke-width",
+    +calculateSizeFunc(strokeWidth, pow).toFixed(2)
+  );
+  element.setAttribute("points", points.join(" "));
 }
-
-console.log(getSVGPoints(c));
