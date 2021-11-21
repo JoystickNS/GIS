@@ -121,12 +121,17 @@ const popupMenu = {
                 });
                 // Если отметка была ранее сохранена, то просто отображаем её всплывающее окно и выходим
                 if (savedMark) {
+                  const coordsSpan = savedMark.domBlock.querySelectorAll(
+                    "[class='popup-window__coords-layer'] span"
+                  );
+                  coordsSpan[0].textContent = markX + 8;
+                  coordsSpan[1].textContent = markY + 16;
                   main.append(savedMark.domBlock);
-                  calcPopupWindowPosition(
+                  calculatePopupWindowPosition(
                     main,
                     savedMark.domBlock,
-                    markX,
-                    markY,
+                    markX - main.scrollLeft,
+                    markY - main.scrollTop,
                     8,
                     16
                   );
@@ -264,9 +269,13 @@ const popupMenu = {
                       });
 
                       button.disabled = false;
-                      // FIXME:
-                      // map.calcCoords.markCount = 0;
-                      // map.calcCoords.savedCount = 0;
+                      map.calcCoords.markCount = 0;
+                      map.calcCoords.savedCount = 0;
+                      markCoords.forEach((mark) => {
+                        mark.isSaved = false;
+                        mark.mark = null;
+                        mark.domBlock = null;
+                      });
                     };
 
                     setTimeout(
@@ -292,11 +301,11 @@ const popupMenu = {
                 };
 
                 // Рассчитывает позицию всплывающего окна, при наведении на отметку на карте
-                calcPopupWindowPosition(
+                calculatePopupWindowPosition(
                   main,
                   markPopupWindow,
-                  markX,
-                  markY,
+                  markX - main.scrollLeft,
+                  markY - main.scrollTop,
                   8,
                   16
                 );
@@ -449,7 +458,7 @@ function hidePopupMenu() {
  * @param {Number} offsetX - Смещение, относительно координаты X
  * @param {Number} offsetY - Смещение, относительно координаты Y
  */
-function calcPopupWindowPosition(
+function calculatePopupWindowPosition(
   window,
   popupWindow,
   x,
@@ -457,18 +466,17 @@ function calcPopupWindowPosition(
   offsetX = 0,
   offsetY = 0
 ) {
-  const divX = window.scrollLeft;
-  const divY = window.scrollTop;
-
-  if (x - divX < popupWindow.offsetWidth / 2) {
-    popupWindow.style.left = `${divX}px`;
-  } else if (window.offsetWidth - x + divX < popupWindow.offsetWidth / 2) {
-    popupWindow.style.right = `${-divX}px`;
+  if (x < popupWindow.offsetWidth / 2) {
+    popupWindow.style.left = "0px";
+  } else if (window.offsetWidth - x < popupWindow.offsetWidth / 2) {
+    popupWindow.style.left = `${
+      window.clientWidth - popupWindow.offsetWidth
+    }px`;
   } else {
     popupWindow.style.left = `${x + offsetX - popupWindow.offsetWidth / 2}px`;
   }
 
-  if (y - divY < popupWindow.offsetHeight) {
+  if (y < popupWindow.offsetHeight) {
     popupWindow.style.top = `${y + offsetY}px`;
   } else {
     popupWindow.style.top = `${y - popupWindow.offsetHeight}px`;

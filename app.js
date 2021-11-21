@@ -142,7 +142,7 @@ main.afterImageLoaded = () => {
   let newMapBodyHeight = mapBody.scrollHeight;
 
   // Обработка прокрутки колёсика мыши над картой
-  main.addEventListener("wheel", (e) => {
+  mapBody.addEventListener("wheel", (e) => {
     e.preventDefault();
 
     if (e.deltaY < 0) {
@@ -238,8 +238,6 @@ main.afterImageLoaded = () => {
       // Смешение страницы, относительно того куда приблизили
       const divX = e.clientX - main.offsetLeft;
       const divY = e.clientY - main.offsetTop;
-      const offsetLeft = newMapImageLeft - oldMapImageLeft;
-      const offsetTop = newMapImageTop - oldMapImageTop;
 
       main.scrollTo(
         calculateZoomFunc(e.layerX, scaleCount) - divX,
@@ -258,8 +256,8 @@ main.afterImageLoaded = () => {
             mapElements[i],
             calculateZoomFunc,
             scaleCount,
-            offsetLeft,
-            offsetTop
+            newMapImageLeft - oldMapImageLeft,
+            newMapImageTop - oldMapImageTop
           );
         }
       }
@@ -268,10 +266,25 @@ main.afterImageLoaded = () => {
       // Смещение марок карты
       const marks = mapBody.querySelectorAll(".map__body-mark");
       marks.forEach((mark) => {
-        mark.setAttribute("x", +mark.getAttribute("x") + offsetLeft);
-        mark.setAttribute("y", +mark.getAttribute("y") + offsetTop);
+        mark.setAttribute(
+          "x",
+          (
+            +calculateZoomFunc(+mark.getAttribute("x") + 8, scaleCount) - 8
+          ).toFixed(2)
+        );
+        mark.setAttribute(
+          "y",
+          (
+            +calculateZoomFunc(+mark.getAttribute("y") + 16, scaleCount) - 16
+          ).toFixed(2)
+        );
       });
       // Конец смещения марок карты
+
+      const popupWindow = main.querySelector(".popup-window");
+      if (popupWindow) {
+        popupWindow.remove();
+      }
 
       scale = 1;
     }, 300);
