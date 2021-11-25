@@ -1,4 +1,5 @@
 const xmlns = "http://www.w3.org/2000/svg";
+const body = document.querySelector("body");
 const menuBlock = document.querySelector(".menu");
 const menuItems = menuBlock.querySelectorAll(".menu__item"); // Menu buttons
 const main = document.querySelector("main");
@@ -289,17 +290,6 @@ main.afterImageLoaded = () => {
       scale = 1;
     }, 300);
   });
-};
-
-let a = document.querySelector(".a");
-let b = document.querySelector(".b");
-
-a.onclick = (e) => {
-  calculateSVGSize(c, calculateZoom);
-};
-
-b.onclick = (e) => {
-  calculateSVGSize(c, calculateUnZoom);
 };
 
 main.onmousedown = (e) => {

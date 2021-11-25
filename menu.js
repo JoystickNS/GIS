@@ -93,7 +93,7 @@ const popupMenu = {
 
             const mark = document.createElementNS(xmlns, "image");
             mark.classList.add("map__body-mark");
-            mark.setAttribute("href", "point.svg");
+            mark.setAttribute("href", "images/point.svg");
             mark.setAttribute("x", map.layerX - 8);
             mark.setAttribute("y", map.layerY - 15);
             mark.addEventListener("dragstart", (e) => {
@@ -139,35 +139,35 @@ const popupMenu = {
                 }
 
                 const html = `
-                      <div class="popup-window">
-                        <form class="popup-window__coords-form" method="POST">
-                          <section class="popup-window__coords">
-                            <article class="popup-window__coords-layer">
-                              <p>Экранный X: <span class="dodgerblue">${
-                                markX + 8
-                              }</span></p>
-                              <p>Экранный Y: <span class="dodgerblue">${
-                                markY + 16
-                              }</span></p>
-                            </article>
-                            <article class="popup-window__coords-real">
-                              <label style="display:block" for="real-coord-x">
-                                Реальный<span class="dodgerblue"> Х:</span>
-                              </label>
-                              <input type="text" id="real-coord-x" name="realX" pattern="^[0-9]{1,10}$" autocomplete="off">
-                              <label style="display:block" for="real-coord-y">
-                                Реальный<span class="dodgerblue"> Y:</span> 
-                              </label>
-                              <input type="text" id="real-coord-y" name="realY" pattern="^[0-9]{1,10}$" autocomplete="off">
-                            </article>
-                          </section>
-                          <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
-                          <div class="popup-window__buttons">
-                            <button class="popup-window__delete-coord button button_red-border" type="button" hidden>Удалить координаты</button>
-                            <button class="popup-window__save-button button button_green-border" type="submit">Сохранить координаты</button>
-                          </div>
-                        </form>
-                      </div>`;
+                  <div class="popup-window">
+                    <form class="popup-window__coords-form" method="POST">
+                      <section class="popup-window__coords">
+                        <article class="popup-window__coords-layer">
+                          <p>Экранный X: <span class="dodgerblue">${
+                            markX + 8
+                          }</span></p>
+                          <p>Экранный Y: <span class="dodgerblue">${
+                            markY + 16
+                          }</span></p>
+                        </article>
+                        <article class="popup-window__coords-real">
+                          <label style="display:block" for="real-coord-x">
+                            Реальный<span class="dodgerblue"> Х:</span>
+                          </label>
+                          <input type="text" id="real-coord-x" name="realX" pattern="^[0-9]{1,10}$" autocomplete="off">
+                          <label style="display:block" for="real-coord-y">
+                            Реальный<span class="dodgerblue"> Y:</span> 
+                          </label>
+                          <input type="text" id="real-coord-y" name="realY" pattern="^[0-9]{1,10}$" autocomplete="off">
+                        </article>
+                      </section>
+                      <p class="popup-window__result-msg unvisible">Результат обработки формы</p>
+                      <div class="popup-window__buttons">
+                        <button class="popup-window__delete-coord button button_red-border" type="button" hidden>Удалить координаты</button>
+                        <button class="popup-window__save-button button button_green-border" type="submit">Сохранить координаты</button>
+                      </div>
+                    </form>
+                  </div>`;
                 main.insertAdjacentHTML("beforeend", html);
 
                 const markPopupWindow = main.querySelector(".popup-window");
@@ -213,11 +213,11 @@ const popupMenu = {
 
                   if (map.calcCoords.savedCount === marksCount) {
                     const html = `      
-                        <div class="map__confirm-calc">
-                          <button class="map__confirm-calc-bt button button_green-border">
-                            Рассчитать реальные координаты
-                          </button>
-                        </div>`;
+                      <div class="map__confirm-calc">
+                        <button class="map__confirm-calc-bt button button_green-border">
+                          Рассчитать реальные координаты
+                        </button>
+                      </div>`;
                     main.insertAdjacentHTML("beforeend", html);
                     const caclRealCoordsBlock =
                       main.querySelector(".map__confirm-calc");
