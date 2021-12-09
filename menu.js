@@ -49,14 +49,7 @@ const popupMenu = {
         }
       },
     },
-    // Пункт меню "Сохранить"
-    {
-      name: "Сохранить",
-      event: "click",
-      func() {
-        alert("Сохранить");
-      },
-    },
+    // Пункт меню "..."
   ],
 
   // Пункт меню "Функции"
@@ -260,12 +253,14 @@ const popupMenu = {
                         const realX = document.querySelector(".realX");
                         const realY = document.querySelector(".realY");
 
-                        realX.innerHTML = `RealX: ${
-                          map.zeroRealCoord.x + e.layerY * map.mPerPixel
-                        }`;
-                        realY.innerHTML = `RealY: ${
-                          map.zeroRealCoord.y + e.layerX * map.mPerPixel
-                        }`;
+                        realX.innerHTML = `RealX: ${+(
+                          map.zeroRealCoord.x +
+                          e.layerY * map.mPerPixel
+                        ).toFixed(2)}`;
+                        realY.innerHTML = `RealY: ${+(
+                          map.zeroRealCoord.y +
+                          e.layerX * map.mPerPixel
+                        ).toFixed(2)}`;
                       });
 
                       button.disabled = false;
@@ -355,14 +350,7 @@ const popupMenu = {
         };
       },
     },
-    // Пункт меню ""
-    {
-      name: "2",
-      event: "click",
-      func() {
-        alert("2");
-      },
-    },
+    // Пункт меню "..."
   ],
 };
 

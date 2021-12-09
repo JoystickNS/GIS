@@ -1,67 +1,8 @@
-const xmlns = "http://www.w3.org/2000/svg";
-const body = document.querySelector("body");
-const menuBlock = document.querySelector(".menu");
-const menuItems = menuBlock.querySelectorAll(".menu__item"); // Menu buttons
-const main = document.querySelector("main");
-const mapBody = main.querySelector(".map__body");
-const mapImage = main.querySelector(".map__image");
-const options = document.querySelector(".options");
-const sidebar = document.querySelector(".sidebar");
-
-const map = {
-  step: 10,
-  mPerPixel: null,
-  isFree: true,
-  calcCoords: {
-    markCount: 0,
-    savedCount: 0,
-    markCoords: [
-      {
-        isSaved: false,
-        mark: null,
-        domBlock: null,
-        layerX: 10,
-        layerY: 10,
-        realX: 10,
-        realY: 10,
-      },
-      {
-        isSaved: false,
-        mark: null,
-        domBlock: null,
-        layerX: 20,
-        layerY: 20,
-        realX: 20,
-        realY: 20,
-      },
-    ],
-  },
-  zeroRealCoord: {
-    x: 0,
-    y: 0,
-  },
-  isCoordsCalculated: false,
-  isMarked: false,
-  isGridAttach: false,
-  layerX: 0,
-  layerY: 0,
-  realX: 0,
-  realY: 0,
-};
-
 mapBody.addEventListener("mousewheel", (e) => {
   if (e.ctrlKey) {
     e.preventDefault();
   }
 });
-
-mapBody.onmouseenter = () => {
-  //mapBody.querySelector(".map__body-grid-attach").style.visibility = "visible";
-};
-
-mapBody.onmouseleave = () => {
-  //mapBody.querySelector(".map__body-grid-attach").style.visibility = "hidden";
-};
 
 mapBody.onmousemove = (e) => {
   const xb = document.querySelector(".xb");
@@ -78,16 +19,12 @@ mapBody.onmousemove = (e) => {
     map.layerY = e.layerY;
   }
 
-  // const point = mapBody.querySelector(".map__body-grid-attach");
+  const point = mapBody.querySelector(".map__body-grid-attach");
 
-  // point.setAttribute("cx", map.layerX);
-  // point.setAttribute("cy", map.layerY);
-
-  // const xc = document.querySelector(".xc");
-  // const yc = document.querySelector(".yc");
-
-  // xc.innerHTML = `Xc: ${map.layerX}`;
-  // yc.innerHTML = `Yc: ${map.layerY}`;
+  if (point) {
+    point.setAttribute("cx", map.layerX);
+    point.setAttribute("cy", map.layerY);
+  }
 };
 
 const optionsGrid = options.querySelector("#options__item-grid");
@@ -113,25 +50,50 @@ const optionsGridAttach = options.querySelector("#options__item-grid-attach");
 
 optionsGridAttach.onchange = (e) => {
   map.isGridAttach = e.target.checked;
+
+  if (map.isGridAttach) {
+    const circle = document.createElementNS(xmlns, "circle");
+
+    circle.classList.add("map__body-grid-attach");
+    circle.setAttribute("r", 1);
+
+    main.querySelector(".map__body-grid").append(circle);
+
+    mapBody.onmouseenter = () => {
+      mapBody.querySelector(".map__body-grid-attach").style.visibility =
+        "visible";
+    };
+
+    mapBody.onmouseleave = () => {
+      mapBody.querySelector(".map__body-grid-attach").style.visibility =
+        "hidden";
+    };
+  } else {
+    mapBody.querySelector("map__body-grid-attach")?.remove();
+
+    mapBody.onmouseenter = null;
+
+    mapBody.onmouseleave = null;
+  }
 };
 
 // Срабатывает после загрузки картинки карты
 main.afterImageLoaded = () => {
-  main.addEventListener("mousemove", (e) => {
+  main.onmousemove = (e) => {
     if (e.buttons & 1) {
       map.isFree = false;
       main.scrollLeft -= e.movementX;
       main.scrollTop -= e.movementY;
       main.style.cursor = "grab";
     }
-  });
+  };
 
-  main.addEventListener("mouseup", (e) => {
+  main.onmouseup = (e) => {
     if (~e.buttons & 1) {
       main.style.cursor = "default";
       map.isFree = true;
     }
-  });
+  };
 
   let scale = 1;
   let timeoutId = null;
@@ -143,7 +105,7 @@ main.afterImageLoaded = () => {
   let newMapBodyHeight = mapBody.scrollHeight;
 
   // Обработка прокрутки колёсика мыши над картой
-  mapBody.addEventListener("wheel", (e) => {
+  mapBody.onwheel = (e) => {
     e.preventDefault();
 
     if (e.deltaY < 0) {
@@ -183,6 +145,7 @@ main.afterImageLoaded = () => {
       clearTimeout(timeoutId);
     }
 
+    // Функция перерасчёта размеров и позиций всех объектов
     timeoutId = setTimeout(() => {
       if (scale === 1) {
         mapImage.style.transform = "";
@@ -219,9 +182,6 @@ main.afterImageLoaded = () => {
       newMapImageTop = calculateZoomFunc(newMapImageTop, scaleCount);
       // Конец расчёта новых значений
 
-      const oldMapImageLeft = parseFloat(mapImage.style.left);
-      const oldMapImageTop = parseFloat(mapImage.style.top);
-
       // Присвоение новых значений
       mapImage.style.transform = "";
       mapImage.style.transformOrigin = "";
@@ -253,13 +213,7 @@ main.afterImageLoaded = () => {
           mapElements[i].tagName == "polyline" ||
           mapElements[i].tagName == "polygon"
         ) {
-          calculateSVGSize(
-            mapElements[i],
-            calculateZoomFunc,
-            scaleCount,
-            newMapImageLeft - oldMapImageLeft,
-            newMapImageTop - oldMapImageTop
-          );
+          calculateSVGSize(mapElements[i], calculateZoomFunc, scaleCount);
         }
       }
       // Конец масштабирования элементов карты
@@ -289,21 +243,8 @@ main.afterImageLoaded = () => {
 
       scale = 1;
     }, 300);
-  });
+  };
 };
-
-main.onmousedown = (e) => {
-  e.preventDefault();
-  if (e.buttons & 1) {
-  }
-};
-
-main.addEventListener("click", (e) => {
-  const divX = e.clientX - main.offsetLeft;
-  const divY = e.clientY - main.offsetTop;
-  console.log(divX);
-  console.log(divY);
-});
 
 let c = document.querySelector("polyline");
 
@@ -341,44 +282,17 @@ function getArraySVGPoints(element) {
  * @param {Function} calculateSizeFunc - функция, которая вычисляет, на сколько будут
  * увеличены или уменьшены размеры SVG элемента
  * @param {Number} pow - аргумент для функции calculateSizeFunc
- * @param {Number} offsetX - Смещение относительно X
- * @param {Number} offsetY - Смещение относительно Y
  */
-function calculateSVGSize(
-  element,
-  calculateSizeFunc,
-  pow = 1,
-  offsetX = 0,
-  offsetY = 0
-) {
+function calculateSVGSize(element, calculateSizeFunc, pow = 1) {
   const points = getArraySVGPoints(element);
 
-  let firstPoint = points[0].split(",");
-  let secondPoint;
-  let newDiffX = 0;
-  let newDiffY = 0;
-  let summDiffX = 0;
-  let summDiffY = 0;
+  points.forEach((point, i) => {
+    point = point.split(",");
+    point[0] = +calculateSizeFunc(+point[0], pow).toFixed(2);
+    point[1] = +calculateSizeFunc(+point[1], pow).toFixed(2);
+    points[i] = point;
+  });
 
-  for (let i = 1; i < points.length; i++) {
-    secondPoint = points[i].split(",");
-    secondPoint[0] = +secondPoint[0];
-    secondPoint[1] = +secondPoint[1];
-    const lenX = secondPoint[0] - firstPoint[0];
-    const lenY = secondPoint[1] - firstPoint[1];
-    summDiffX += newDiffX;
-    summDiffY += newDiffY;
-    newDiffX = calculateSizeFunc(lenX, pow) - lenX;
-    newDiffY = calculateSizeFunc(lenY, pow) - lenY;
-    firstPoint = Array.from(secondPoint);
-    points[i] = `${+(secondPoint[0] + summDiffX + newDiffX + offsetX).toFixed(
-      2
-    )},${+(secondPoint[1] + summDiffY + newDiffY + offsetY).toFixed(2)}`;
-  }
-  firstPoint = points[0].split(",");
-  points[0] = `${+(+firstPoint[0] + offsetX).toFixed(2)},${+(
-    +firstPoint[1] + offsetY
-  ).toFixed(2)}`;
   const strokeWidth = element.getAttribute("stroke-width");
   element.setAttribute(
     "stroke-width",

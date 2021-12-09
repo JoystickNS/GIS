@@ -340,5 +340,10 @@ hr {
 .object-info__caption {
 }
 
+.object-info__label {
+  padding: 0;
+  margin: 5px;
+}
+
 .object-info__button {
 }

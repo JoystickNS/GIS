@@ -18,13 +18,13 @@ roadSection.onclick = () => {
           <div class="dialog__form-item">
             <label for="condition-type" class="dialog__input-label">Состояние участка</label>
             <select class="dialog__form-select" id="condition-type" name="conditionType">
-              <option value="volvo">Volvo</option>
+              <option value="none"> </option>
             </select>
           </div>
           <div class="dialog__form-item">
             <label for="coverage-type" class="dialog__input-label">Вид покрытия</label>
             <select class="dialog__form-select" id="coverage-type" name="coverageType">
-              <option value="volvo">Volvo</option>
+              <option value="none"> </option>
             </select>
           </div>
           <div class="dialog__form-item">
@@ -86,7 +86,7 @@ building.onclick = () => {
           <div class="dialog__form-item">
             <label for="building-type" class="dialog__input-label">Тип здания</label>
             <select class="dialog__form-select" id="building-type" name="buildingType">
-              <option value="volvo">Volvo</option>
+              <option value="none"> </option>
             </select>
           </div>
           <div class="dialog__form-item">
