@@ -1,7 +1,7 @@
 const popupMenu = {
   options: {
-    activeItem: null,
-    activeBlock: null,
+    activeItem: null, // Активный пункт меню
+    activeBlock: null, // Активный html блок с подпунктами меню
   },
 
   // Пункт меню "Файл"
@@ -60,10 +60,6 @@ const popupMenu = {
       event: "click",
       func() {
         const button = this;
-        const p = document.createElement("p");
-        p.innerHTML = "Задание плоских координат";
-        p.style.color = "red";
-        sidebar.append(p);
         button.disabled = true;
 
         // Срабатывает в момент отжатия "Клика" мышки
@@ -88,7 +84,7 @@ const popupMenu = {
             mark.classList.add("map__body-mark");
             mark.setAttribute("href", "images/point.svg");
             mark.setAttribute("x", map.layerX - 8);
-            mark.setAttribute("y", map.layerY - 15);
+            mark.setAttribute("y", map.layerY - 16);
             mark.addEventListener("dragstart", (e) => {
               e.preventDefault();
             });
@@ -96,8 +92,8 @@ const popupMenu = {
             map.calcCoords.markCount++;
 
             freeCoord.mark = mark;
-            // freeCoord.layerX = map.layerX;
-            // freeCoord.layerY = map.layerY;
+            freeCoord.layerX = map.layerX;
+            freeCoord.layerY = map.layerY;
 
             // Срабатывает при наведении на отметку на карте
             mark.onmouseenter = (e) => {
@@ -136,10 +132,10 @@ const popupMenu = {
                     <form class="popup-window__coords-form" method="POST">
                       <section class="popup-window__coords">
                         <article class="popup-window__coords-layer">
-                          <p>Экранный X: <span class="dodgerblue">${
+                          <p>X полотна: <span class="dodgerblue">${
                             markX + 8
                           }</span></p>
-                          <p>Экранный Y: <span class="dodgerblue">${
+                          <p>Y полотна: <span class="dodgerblue">${
                             markY + 16
                           }</span></p>
                         </article>
@@ -179,8 +175,8 @@ const popupMenu = {
                   const realYInput = form.elements["realY"];
 
                   freeCoord.isSaved = true;
-                  // freeCoord.realX = +formData.get("realX");
-                  // freeCoord.realY = +formData.get("realY");
+                  freeCoord.realX = +formData.get("realX");
+                  freeCoord.realY = +formData.get("realY");
                   mark.dataset.markStatus = "saved";
                   map.calcCoords.savedCount++;
 
@@ -239,14 +235,14 @@ const popupMenu = {
                       map.mPerPixel = realDist / layerDist;
                       map.zeroRealCoord.x =
                         markCoords[0].realX -
-                        map.mPerPixel * markCoords[0].layerY;
+                        map.mPerPixel * markCoords[0].layerX;
                       map.zeroRealCoord.y =
                         markCoords[0].realY -
-                        map.mPerPixel * markCoords[0].layerX;
+                        map.mPerPixel * markCoords[0].layerY;
 
                       map.isCoordsCalculated = true;
 
-                      caclRealCoordsBlock.style.top = "-80px";
+                      caclRealCoordsBlock.style.top = "0px";
                       setTimeout(() => caclRealCoordsBlock.remove(), 800);
 
                       mapBody.addEventListener("mousemove", (e) => {
@@ -308,12 +304,12 @@ const popupMenu = {
             };
 
             // Срабатывает, когда "Кликаем" по отметке на карте
-            mark.onmouseup = () => {
+            mark.onmouseup = (e) => {
               if (!map.isFree) {
                 return;
               }
 
-              if (mark.dataset.markStatus !== "saved") {
+              if (e.button === 0 && mark.dataset.markStatus !== "saved") {
                 const markCoord = markCoords.find((i) => i.mark === mark);
                 markCoord.domBlock = null;
                 markCoord.mark = null;

@@ -20,6 +20,7 @@ info.onclick = () => {
       <p class="object-info__label">Угол поворота: 0</p>
       <p class="object-info__label">Уклон: 0</p>
       <button class="object-info__button dialog__form-submit-bt">Редактировать</button>
+      <button class="object-info__button dialog__form-submit-bt">Удалить</button>
     </div>`;
 
   main.insertAdjacentHTML("beforeend", html);
